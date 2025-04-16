@@ -10,13 +10,15 @@ import {
   Platform,
   ActivityIndicator,
   ImageBackground,
+  Alert,
 } from 'react-native';
 import { SendIcon } from './Icon';
 import AudioButton from './AudioButton';
 import { useCredits } from '../context/CreditsContext';
 import { useUser } from '../context/UserContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function ChatScreen() {
+export default function ChatScreen({ currentChat }) {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -24,18 +26,78 @@ export default function ChatScreen() {
   const { user } = useUser();
   const flatListRef = useRef(null);
 
-  // Carregar mensagens do armazenamento local
+  // Carregar mensagens do armazenamento local ou do chat selecionado
   useEffect(() => {
-    // Simulação de mensagens iniciais
-    setMessages([
-      {
-        id: '1',
-        text: 'Olá! Eu sou Jesus.IA, um assistente baseado na Bíblia. Como posso ajudar você hoje?',
-        sender: 'ai',
-        timestamp: new Date(),
-      },
-    ]);
-  }, []);
+    const loadMessages = async () => {
+      try {
+        if (currentChat) {
+          // Se um chat foi selecionado do histórico, carregamos suas mensagens
+          const chatId = currentChat.id;
+          const storedMessages = await AsyncStorage.getItem(`chat_${chatId}`);
+          
+          if (storedMessages) {
+            setMessages(JSON.parse(storedMessages));
+          } else {
+            // Se não houver mensagens salvas para este chat, criamos com base no título
+            setMessages([
+              {
+                id: '1',
+                text: 'Olá! Eu sou Jesus.IA, um assistente baseado na Bíblia. Como posso ajudar você hoje?',
+                sender: 'ai',
+                timestamp: new Date(),
+              },
+              {
+                id: '2',
+                text: currentChat.title,
+                sender: 'user',
+                timestamp: new Date(),
+              },
+              {
+                id: '3',
+                text: currentChat.preview,
+                sender: 'ai',
+                timestamp: new Date(),
+              },
+            ]);
+          }
+        } else {
+          // Se nenhum chat foi selecionado, verificamos se há um chat atual salvo
+          const currentChatId = await AsyncStorage.getItem('current_chat_id');
+          
+          if (currentChatId) {
+            const storedMessages = await AsyncStorage.getItem(`chat_${currentChatId}`);
+            if (storedMessages) {
+              setMessages(JSON.parse(storedMessages));
+              return;
+            }
+          }
+          
+          // Se não houver chat atual, mostramos a mensagem inicial
+          setMessages([
+            {
+              id: '1',
+              text: 'Olá! Eu sou Jesus.IA, um assistente baseado na Bíblia. Como posso ajudar você hoje?',
+              sender: 'ai',
+              timestamp: new Date(),
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar mensagens:', error);
+        // Em caso de erro, exibimos pelo menos a mensagem inicial
+        setMessages([
+          {
+            id: '1',
+            text: 'Olá! Eu sou Jesus.IA, um assistente baseado na Bíblia. Como posso ajudar você hoje?',
+            sender: 'ai',
+            timestamp: new Date(),
+          },
+        ]);
+      }
+    };
+    
+    loadMessages();
+  }, [currentChat]);
 
   // Rolar para o final da lista quando novas mensagens são adicionadas
   useEffect(() => {
@@ -49,7 +111,8 @@ export default function ChatScreen() {
 
     // Verificar se há créditos disponíveis (apenas para planos gratuitos)
     if (credits <= 0 && plan === 'free') {
-      alert(
+      Alert.alert(
+        'Créditos Insuficientes',
         'Você não tem créditos suficientes. Assista a um anúncio para ganhar mais créditos ou faça upgrade para um plano premium.'
       );
       return;
@@ -58,7 +121,8 @@ export default function ChatScreen() {
     // Consumir um crédito (não consome para planos premium)
     const hasCredit = await useCredit();
     if (!hasCredit) {
-      alert(
+      Alert.alert(
+        'Créditos Insuficientes',
         'Você não tem créditos suficientes. Assista a um anúncio para ganhar mais créditos ou faça upgrade para um plano premium.'
       );
       return;
@@ -72,7 +136,8 @@ export default function ChatScreen() {
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setMessage('');
     setLoading(true);
 
@@ -88,10 +153,37 @@ export default function ChatScreen() {
         timestamp: new Date(),
       };
 
-      setMessages((prev) => [...prev, aiMessage]);
+      const finalMessages = [...updatedMessages, aiMessage];
+      setMessages(finalMessages);
+      
+      // Salvar a conversa no armazenamento local
+      const chatId = currentChat ? currentChat.id : 'current_chat';
+      await AsyncStorage.setItem(`chat_${chatId}`, JSON.stringify(finalMessages));
+      await AsyncStorage.setItem('current_chat_id', chatId);
+      
+      // Se for uma nova conversa, salvar no histórico
+      if (!currentChat && finalMessages.length === 3) {
+        // É uma nova conversa com apenas a mensagem inicial, a pergunta do usuário e a resposta
+        const newChatId = `chat_${Date.now()}`;
+        const newChat = {
+          id: newChatId,
+          title: text.length > 30 ? text.substring(0, 30) + '...' : text,
+          date: new Date().toLocaleDateString(),
+          preview: response.length > 50 ? response.substring(0, 50) + '...' : response,
+        };
+        
+        // Salvar o novo chat no histórico
+        const storedHistory = await AsyncStorage.getItem('chat_history');
+        const chatHistory = storedHistory ? JSON.parse(storedHistory) : [];
+        const updatedHistory = [newChat, ...chatHistory].slice(0, 20); // Manter apenas os 20 chats mais recentes
+        
+        await AsyncStorage.setItem('chat_history', JSON.stringify(updatedHistory));
+        await AsyncStorage.setItem(`chat_${newChatId}`, JSON.stringify(finalMessages));
+        await AsyncStorage.setItem('current_chat_id', newChatId);
+      }
     } catch (error) {
       console.error('Erro ao obter resposta:', error);
-      alert('Não foi possível obter uma resposta. Por favor, tente novamente.');
+      Alert.alert('Erro', 'Não foi possível obter uma resposta. Por favor, tente novamente.');
     } finally {
       setLoading(false);
     }

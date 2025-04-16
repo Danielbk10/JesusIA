@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ScrollView, Image, Switch } from 'react-native';
 import { useUser } from '../context/UserContext';
+import { useCredits } from '../context/CreditsContext';
 
-export default function ProfileModal({ onClose }) {
+export default function ProfileModal({ onClose, onLogout }) {
   const { user, updateUser } = useUser();
+  const { credits, plan } = useCredits();
   const [name, setName] = useState(user?.displayName || '');
   const [email, setEmail] = useState(user?.email || '');
+  const [notifications, setNotifications] = useState(true);
+  const [darkMode, setDarkMode] = useState(true);
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -32,11 +36,18 @@ export default function ProfileModal({ onClose }) {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>Seu Perfil</Text>
         
-        <View style={styles.profilePicture}>
-          <Text style={styles.profileInitial}>
-            {name ? name.charAt(0).toUpperCase() : '?'}
-          </Text>
-        </View>
+        {user?.photoURL ? (
+          <Image 
+            source={{ uri: user.photoURL }} 
+            style={styles.profilePicture} 
+          />
+        ) : (
+          <View style={styles.profilePicture}>
+            <Text style={styles.profileInitial}>
+              {name ? name.charAt(0).toUpperCase() : '?'}
+            </Text>
+          </View>
+        )}
         
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Nome</Text>
@@ -61,6 +72,40 @@ export default function ProfileModal({ onClose }) {
           />
         </View>
         
+        <View style={styles.infoContainer}>
+          <Text style={styles.infoLabel}>Plano atual:</Text>
+          <Text style={styles.infoValue}>
+            {plan === 'premium' ? 'Premium' : 'Gratuito'}
+          </Text>
+        </View>
+        
+        <View style={styles.infoContainer}>
+          <Text style={styles.infoLabel}>Créditos disponíveis:</Text>
+          <Text style={styles.infoValue}>
+            {plan === 'premium' ? 'Ilimitado' : credits}
+          </Text>
+        </View>
+        
+        <View style={styles.settingContainer}>
+          <Text style={styles.settingLabel}>Notificações</Text>
+          <Switch
+            value={notifications}
+            onValueChange={setNotifications}
+            trackColor={{ false: '#444', true: '#00a884' }}
+            thumbColor={notifications ? '#fff' : '#f4f3f4'}
+          />
+        </View>
+        
+        <View style={styles.settingContainer}>
+          <Text style={styles.settingLabel}>Modo escuro</Text>
+          <Switch
+            value={darkMode}
+            onValueChange={setDarkMode}
+            trackColor={{ false: '#444', true: '#00a884' }}
+            thumbColor={darkMode ? '#fff' : '#f4f3f4'}
+          />
+        </View>
+        
         <Text style={styles.disclaimer}>
           Suas informações são armazenadas apenas no seu dispositivo e não são compartilhadas.
         </Text>
@@ -81,6 +126,13 @@ export default function ProfileModal({ onClose }) {
           <Text style={styles.buttonText}>Salvar</Text>
         </TouchableOpacity>
       </View>
+      
+      <TouchableOpacity 
+        style={styles.logoutButton} 
+        onPress={onLogout}
+      >
+        <Text style={styles.logoutButtonText}>Sair da conta</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -160,5 +212,50 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  logoutButton: {
+    backgroundColor: '#d32f2f',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 20,
+  },
+  logoutButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  infoContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    padding: 12,
+    backgroundColor: '#262626',
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  infoLabel: {
+    color: '#aaa',
+    fontSize: 16,
+  },
+  infoValue: {
+    color: '#00a884',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  settingContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    padding: 12,
+    backgroundColor: '#262626',
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  settingLabel: {
+    color: '#fff',
+    fontSize: 16,
   },
 });

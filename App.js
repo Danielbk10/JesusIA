@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Modal, SafeAreaView, ImageBackground, Text } from 'react-native';
+import { View, StyleSheet, Modal, SafeAreaView, ImageBackground, Text, TouchableOpacity, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { UserProvider } from './context/UserContext';
 import { CreditsProvider } from './context/CreditsContext';
@@ -8,18 +8,47 @@ import SubscriptionPlans from './components/SubscriptionPlans';
 import Header from './components/Header';
 import ProfileModal from './components/ProfileModal';
 import MenuDrawer from './components/MenuDrawer';
+import LoginScreen from './components/LoginScreen';
+import SideMenu from './components/SideMenu';
+import BottomBar from './components/BottomBar';
+import BackgroundImage from './components/BackgroundImage';
 
 export default function App() {
   const [plansModalVisible, setPlansModalVisible] = useState(false);
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
-  const [currentScreen, setCurrentScreen] = useState('home');
-
+  const [sideMenuVisible, setSideMenuVisible] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentChat, setCurrentChat] = useState(null);
+  
   // Imagem de fundo da árvore
   const treeBackground = require('./assets/images/icon.png');
 
-  const handleNavigate = (screen) => {
-    setCurrentScreen(screen);
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+  };
+  
+  const handleLogout = () => {
+    Alert.alert(
+      'Sair da conta',
+      'Tem certeza que deseja sair da sua conta?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Sair', 
+          style: 'destructive',
+          onPress: () => {
+            setIsLoggedIn(false);
+            setProfileModalVisible(false);
+          }
+        }
+      ]
+    );
+  };
+  
+  const handleSelectChat = (chat) => {
+    setCurrentChat(chat);
+    // Aqui você poderia carregar o histórico de mensagens do chat selecionado
   };
 
   const renderStatusBar = (
@@ -39,50 +68,82 @@ export default function App() {
         <SafeAreaView style={styles.container}>
           <StatusBar style="light" />
           
-          {renderStatusBar}
-
-          <ImageBackground 
-            source={treeBackground} 
-            style={styles.backgroundImage} 
-            imageStyle={styles.backgroundImageStyle}
-          >
-            <Header 
-              onPressProfile={() => setProfileModalVisible(true)} 
-              onPressMenu={() => setMenuVisible(true)}
-            />
-            
-            <ChatScreen />
-
-            <Modal
-              animationType="slide"
-              transparent={false}
-              visible={plansModalVisible}
-              onRequestClose={() => setPlansModalVisible(false)}
-            >
-              <SubscriptionPlans onClose={() => setPlansModalVisible(false)} />
-            </Modal>
-
-            <Modal
-              animationType="slide"
-              transparent={false}
-              visible={profileModalVisible}
-              onRequestClose={() => setProfileModalVisible(false)}
-            >
-              <ProfileModal onClose={() => setProfileModalVisible(false)} />
-            </Modal>
-
-            <Modal
-              animationType="slide"
-              transparent={false}
-              visible={menuVisible}
-              onRequestClose={() => setMenuVisible(false)}
-            >
-              <MenuDrawer 
-                onClose={() => setMenuVisible(false)} 
-                onNavigateTo={handleNavigate}
-              />
-            </Modal>
-          </ImageBackground>
+          {!isLoggedIn ? (
+            <LoginScreen onLoginSuccess={handleLogin} />
+          ) : (
+            <>
+              {renderStatusBar}
+              
+              <BackgroundImage>
+                <Header 
+                  onPressProfile={() => setProfileModalVisible(true)} 
+                  onPressMenu={() => setSideMenuVisible(true)}
+                />
+                
+                <ChatScreen 
+                  currentChat={currentChat}
+                />
+                
+                <BottomBar 
+                  onOpenPlans={() => setPlansModalVisible(true)} 
+                />
+                
+                {/* Modal de planos de assinatura */}
+                <Modal
+                  animationType="slide"
+                  transparent={false}
+                  visible={plansModalVisible}
+                  onRequestClose={() => setPlansModalVisible(false)}
+                >
+                  <SubscriptionPlans onClose={() => setPlansModalVisible(false)} />
+                </Modal>
+                
+                {/* Modal de perfil do usuário */}
+                <Modal
+                  animationType="slide"
+                  transparent={false}
+                  visible={profileModalVisible}
+                  onRequestClose={() => setProfileModalVisible(false)}
+                >
+                  <ProfileModal 
+                    onClose={() => setProfileModalVisible(false)} 
+                    onLogout={handleLogout}
+                  />
+                </Modal>
+                
+                {/* Menu lateral (drawer) */}
+                <Modal
+                  animationType="slide"
+                  transparent={true}
+                  visible={sideMenuVisible}
+                  onRequestClose={() => setSideMenuVisible(false)}
+                >
+                  <View style={styles.sideMenuContainer}>
+                    <SideMenu 
+                      onClose={() => setSideMenuVisible(false)}
+                      onSelectChat={handleSelectChat}
+                      onOpenPlans={() => {
+                        setSideMenuVisible(false);
+                        setPlansModalVisible(true);
+                      }}
+                    />
+                  </View>
+                </Modal>
+                
+                {/* Menu de opções */}
+                <Modal
+                  animationType="slide"
+                  transparent={false}
+                  visible={menuVisible}
+                  onRequestClose={() => setMenuVisible(false)}
+                >
+                  <MenuDrawer 
+                    onClose={() => setMenuVisible(false)}
+                  />
+                </Modal>
+              </BackgroundImage>
+            </>
+          )}
         </SafeAreaView>
       </CreditsProvider>
     </UserProvider>
@@ -126,5 +187,9 @@ const styles = StyleSheet.create({
   backgroundImageStyle: {
     opacity: 0.1,
     resizeMode: 'contain',
+  },
+  sideMenuContainer: {
+    flex: 1,
+    flexDirection: 'row',
   },
 });
