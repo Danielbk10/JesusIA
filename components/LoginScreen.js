@@ -9,7 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert
+  Alert,
+  ImageBackground
 } from 'react-native';
 import { useUser } from '../context/UserContext';
 
@@ -83,13 +84,22 @@ export default function LoginScreen({ onLoginSuccess }) {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+    <ImageBackground
+      source={require('../assets/images/tree_background.png')}
+      style={styles.backgroundImage}
+      imageStyle={styles.backgroundImageStyle}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>JESUS.IA</Text>
+          <Image 
+            source={require('../assets/images/jesus-logo.png')} 
+            style={styles.logoImage} 
+            resizeMode="contain"
+          />
           <Text style={styles.tagline}>Representação consciência de jesus segundo a bíblia</Text>
         </View>
         
@@ -163,15 +173,22 @@ export default function LoginScreen({ onLoginSuccess }) {
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+  },
+  backgroundImageStyle: {
+    opacity: 0.1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: 'transparent',
   },
   scrollContent: {
     flexGrow: 1,
@@ -182,11 +199,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
-  logoText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
-    letterSpacing: 2,
+  logoImage: {
+    width: 200,
+    height: 80,
+    marginBottom: 10,
   },
   tagline: {
     fontSize: 14,

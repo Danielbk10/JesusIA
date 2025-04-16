@@ -4,7 +4,7 @@ import { View, StyleSheet, ImageBackground } from 'react-native';
 export default function BackgroundImage({ children }) {
   return (
     <ImageBackground
-      source={require('../assets/images/icon.png')}
+      source={require('../assets/images/tree_background.png')}
       style={styles.container}
       imageStyle={styles.image}
     >
