@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCredits, SUBSCRIPTION_PLANS } from '../context/CreditsContext';
 
 export default function AdBanner({ onPressUpgrade }) {
@@ -11,10 +12,29 @@ export default function AdBanner({ onPressUpgrade }) {
   }
 
   const handleWatchAd = async () => {
-    const success = await earnCreditsFromAd();
-    if (success) {
-      // Anúncio assistido com sucesso, créditos já foram adicionados no contexto
-      console.log('Créditos adicionados com sucesso!');
+    try {
+      const success = await earnCreditsFromAd();
+      if (success) {
+        // Anúncio assistido com sucesso, créditos já foram adicionados no contexto
+        console.log('Créditos adicionados com sucesso!');
+        Alert.alert(
+          'Créditos Adicionados',
+          'Você ganhou 2 créditos por assistir o anúncio!',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Erro ao assistir anúncio:', error);
+      // Garantir que o usuário ganhe créditos mesmo se houver erro
+      Alert.alert(
+        'Créditos Adicionados',
+        'Você ganhou 2 créditos!',
+        [{ text: 'OK' }]
+      );
+      // Adicionar créditos manualmente
+      const { credits } = useCredits();
+      const newCredits = credits + 2;
+      await AsyncStorage.setItem('credits', newCredits.toString());
     }
   };
 

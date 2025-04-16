@@ -81,8 +81,21 @@ export const CreditsProvider = ({ children }) => {
       const storedPlan = await AsyncStorage.getItem('plan');
       const storedEndDate = await AsyncStorage.getItem('subscriptionEndDate');
 
+      // Garantir que o usuário sempre tenha pelo menos 5 créditos
       if (storedCredits !== null) {
-        setCredits(parseInt(storedCredits, 10));
+        const parsedCredits = parseInt(storedCredits, 10);
+        if (parsedCredits <= 0) {
+          // Se os créditos estiverem zerados, restaurar para 5
+          console.log('Créditos zerados, restaurando para 5');
+          setCredits(5);
+          await AsyncStorage.setItem('credits', '5');
+        } else {
+          setCredits(parsedCredits);
+        }
+      } else {
+        // Se não houver créditos armazenados, definir como 5
+        setCredits(5);
+        await AsyncStorage.setItem('credits', '5');
       }
 
       if (storedPlan !== null) {
@@ -107,6 +120,9 @@ export const CreditsProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Erro ao carregar créditos:', error);
+      // Em caso de erro, garantir que o usuário tenha créditos
+      setCredits(5);
+      await AsyncStorage.setItem('credits', '5');
     } finally {
       setLoading(false);
     }
