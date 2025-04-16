@@ -1,0 +1,285 @@
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  ImageBackground,
+} from 'react-native';
+import { SendIcon } from './Icon';
+import AudioButton from './AudioButton';
+import { useCredits } from '../context/CreditsContext';
+import { useUser } from '../context/UserContext';
+
+export default function ChatScreen() {
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const { useCredit, credits, plan } = useCredits();
+  const { user } = useUser();
+  const flatListRef = useRef(null);
+
+  // Carregar mensagens do armazenamento local
+  useEffect(() => {
+    // Simulação de mensagens iniciais
+    setMessages([
+      {
+        id: '1',
+        text: 'Olá! Eu sou Jesus.IA, um assistente baseado na Bíblia. Como posso ajudar você hoje?',
+        sender: 'ai',
+        timestamp: new Date(),
+      },
+    ]);
+  }, []);
+
+  // Rolar para o final da lista quando novas mensagens são adicionadas
+  useEffect(() => {
+    if (messages.length > 0 && flatListRef.current) {
+      flatListRef.current.scrollToEnd({ animated: true });
+    }
+  }, [messages]);
+
+  const sendMessage = async (text = message) => {
+    if (!text.trim()) return;
+
+    // Verificar se há créditos disponíveis (apenas para planos gratuitos)
+    if (credits <= 0 && plan === 'free') {
+      alert(
+        'Você não tem créditos suficientes. Assista a um anúncio para ganhar mais créditos ou faça upgrade para um plano premium.'
+      );
+      return;
+    }
+
+    // Consumir um crédito (não consome para planos premium)
+    const hasCredit = await useCredit();
+    if (!hasCredit) {
+      alert(
+        'Você não tem créditos suficientes. Assista a um anúncio para ganhar mais créditos ou faça upgrade para um plano premium.'
+      );
+      return;
+    }
+
+    // Adicionar mensagem do usuário
+    const userMessage = {
+      id: Date.now().toString(),
+      text,
+      sender: 'user',
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setMessage('');
+    setLoading(true);
+
+    try {
+      // Simular uma chamada de API para obter resposta do modelo
+      const response = await getAIResponse(text);
+
+      // Adicionar resposta do AI
+      const aiMessage = {
+        id: (Date.now() + 1).toString(),
+        text: response,
+        sender: 'ai',
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Erro ao obter resposta:', error);
+      alert('Não foi possível obter uma resposta. Por favor, tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getAIResponse = (text) => {
+    // Simulação de uma chamada de API
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Respostas simuladas baseadas em perguntas comuns
+        const responses = {
+          'oi': 'Olá! Como posso ajudar você hoje com base nos ensinamentos de Jesus?',
+          'olá': 'Olá! Como posso ajudar você hoje com base nos ensinamentos de Jesus?',
+          'quem é jesus': 'Jesus Cristo é o filho de Deus, nascido de Maria, que veio ao mundo para salvar a humanidade. Ele ensinou sobre amor, perdão e compaixão, realizou milagres, morreu na cruz pelos nossos pecados e ressuscitou ao terceiro dia, conforme as Escrituras.',
+          'o que é a bíblia': 'A Bíblia é o livro sagrado do cristianismo, composto por 66 livros divididos em Antigo e Novo Testamento. É considerada a Palavra de Deus, contendo ensinamentos, histórias, profecias e orientações para a vida cristã.',
+          'como ser salvo': 'De acordo com a Bíblia, a salvação vem pela fé em Jesus Cristo. Em João 3:16, lemos: "Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna." A salvação é um presente de Deus, recebido pela fé, não por obras (Efésios 2:8-9).',
+          'o que jesus ensinou': 'Jesus ensinou muitos princípios fundamentais, incluindo amar a Deus sobre todas as coisas e ao próximo como a si mesmo (Mateus 22:37-39), perdoar os outros (Mateus 6:14-15), não julgar (Mateus 7:1-5), ser humilde (Mateus 5:5), buscar primeiro o Reino de Deus (Mateus 6:33), entre outros ensinamentos encontrados principalmente nos Evangelhos.',
+        };
+
+        // Verificar se há uma resposta específica para a pergunta
+        const lowercaseText = text.toLowerCase();
+        for (const [key, value] of Object.entries(responses)) {
+          if (lowercaseText.includes(key)) {
+            resolve(value);
+            return;
+          }
+        }
+
+        // Resposta padrão
+        resolve(
+          'Com base nos ensinamentos de Jesus, posso dizer que o amor e a compaixão são fundamentais em nossa jornada espiritual. Jesus nos ensinou a amar a Deus sobre todas as coisas e ao próximo como a nós mesmos. Se você tiver uma pergunta mais específica sobre os ensinamentos bíblicos, ficarei feliz em ajudar.'
+        );
+      }, 1500); // Simular um atraso de 1,5 segundos
+    });
+  };
+
+  const handleAudioMessage = (transcription) => {
+    sendMessage(transcription);
+  };
+
+  const renderMessage = ({ item }) => {
+    const isAI = item.sender === 'ai';
+    return (
+      <View
+        style={[
+          styles.messageContainer,
+          isAI ? styles.aiMessageContainer : styles.userMessageContainer,
+        ]}
+      >
+        <View
+          style={[
+            styles.messageBubble,
+            isAI ? styles.aiMessageBubble : styles.userMessageBubble,
+          ]}
+        >
+          <Text style={styles.messageText}>{item.text}</Text>
+          <Text style={styles.timestamp}>
+            {new Date(item.timestamp).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+    >
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        renderItem={renderMessage}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.messagesContainer}
+      />
+
+      {loading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color="#00a884" />
+          <Text style={styles.loadingText}>Jesus está digitando...</Text>
+        </View>
+      )}
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Digite sua mensagem..."
+          placeholderTextColor="#999"
+          value={message}
+          onChangeText={setMessage}
+          multiline
+        />
+
+        {message.trim() ? (
+          <TouchableOpacity
+            style={styles.sendButton}
+            onPress={() => sendMessage()}
+          >
+            <SendIcon size={24} color="#fff" />
+          </TouchableOpacity>
+        ) : (
+          <AudioButton onSendAudio={handleAudioMessage} />
+        )}
+      </View>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#121212',
+    paddingBottom: 8,
+  },
+  messagesContainer: {
+    padding: 16,
+    paddingBottom: 8,
+  },
+  messageContainer: {
+    marginBottom: 16,
+    maxWidth: '80%',
+  },
+  aiMessageContainer: {
+    alignSelf: 'flex-start',
+  },
+  userMessageContainer: {
+    alignSelf: 'flex-end',
+  },
+  messageBubble: {
+    borderRadius: 16,
+    padding: 12,
+  },
+  aiMessageBubble: {
+    backgroundColor: '#262626',
+  },
+  userMessageBubble: {
+    backgroundColor: '#00a884',
+  },
+  messageText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  timestamp: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 12,
+    marginTop: 4,
+    alignSelf: 'flex-end',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    marginLeft: 16,
+  },
+  loadingText: {
+    color: '#aaa',
+    marginLeft: 8,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: '#262626',
+    borderRadius: 25,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    color: '#fff',
+    maxHeight: 100,
+    fontSize: 16,
+  },
+  sendButton: {
+    backgroundColor: '#00a884',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 8,
+  },
+});
