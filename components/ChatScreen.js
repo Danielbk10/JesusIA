@@ -17,6 +17,7 @@ import AudioButton from './AudioButton';
 import { useCredits } from '../context/CreditsContext';
 import { useUser } from '../context/UserContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getChatResponse } from '../services/apiService';
 
 export default function ChatScreen({ currentChat }) {
   const [message, setMessage] = useState('');
@@ -189,10 +190,18 @@ export default function ChatScreen({ currentChat }) {
     }
   };
 
-  const getAIResponse = (text) => {
-    // Simulação de uma chamada de API
-    return new Promise((resolve) => {
-      setTimeout(() => {
+  const getAIResponse = async (text) => {
+    try {
+      // Tentar obter resposta da API do ChatGPT
+      const result = await getChatResponse(text);
+      
+      if (result.success) {
+        // Se a chamada foi bem-sucedida, retornar a resposta da API
+        return result.response;
+      } else {
+        console.log('Erro na API ChatGPT, usando simulação como fallback:', result.error);
+        
+        // Se houve erro na API, usar respostas simuladas como fallback
         // Respostas simuladas baseadas em perguntas comuns
         const responses = {
           'oi': 'Olá! Como posso ajudar você hoje com base nos ensinamentos de Jesus?',
@@ -207,17 +216,17 @@ export default function ChatScreen({ currentChat }) {
         const lowercaseText = text.toLowerCase();
         for (const [key, value] of Object.entries(responses)) {
           if (lowercaseText.includes(key)) {
-            resolve(value);
-            return;
+            return value;
           }
         }
 
         // Resposta padrão
-        resolve(
-          'Com base nos ensinamentos de Jesus, posso dizer que o amor e a compaixão são fundamentais em nossa jornada espiritual. Jesus nos ensinou a amar a Deus sobre todas as coisas e ao próximo como a nós mesmos. Se você tiver uma pergunta mais específica sobre os ensinamentos bíblicos, ficarei feliz em ajudar.'
-        );
-      }, 1500); // Simular um atraso de 1,5 segundos
-    });
+        return 'Com base nos ensinamentos de Jesus, posso dizer que o amor e a compaixão são fundamentais em nossa jornada espiritual. Jesus nos ensinou a amar a Deus sobre todas as coisas e ao próximo como a nós mesmos. Se você tiver uma pergunta mais específica sobre os ensinamentos bíblicos, ficarei feliz em ajudar.';
+      }
+    } catch (error) {
+      console.error('Erro ao obter resposta:', error);
+      return 'Desculpe, estou enfrentando dificuldades para processar sua pergunta. Por favor, tente novamente mais tarde ou reformule sua pergunta.';
+    }
   };
 
   const handleAudioMessage = (transcription) => {
