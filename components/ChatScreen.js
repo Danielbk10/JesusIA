@@ -21,6 +21,7 @@ import { useUser } from '../context/UserContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getChatResponse } from '../services/apiService';
 import { FONTS } from '../config/fontConfig';
+import { COLORS } from '../config/colorConfig';
 
 export default function ChatScreen({ currentChat }) {
   const [message, setMessage] = useState('');
@@ -348,7 +349,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#262626',
   },
   userMessageBubble: {
-    backgroundColor: '#00a884',
+    backgroundColor: COLORS.PRIMARY,
   },
   messageText: {
     color: '#fff',
@@ -368,7 +369,7 @@ const styles = StyleSheet.create({
     marginLeft: 16,
   },
   loadingText: {
-    color: '#aaa',
+    color: COLORS.TEXT_MUTED,
     marginLeft: 8,
   },
   inputContainer: {
@@ -391,7 +392,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   sendButton: {
-    backgroundColor: '#00a884',
+    backgroundColor: COLORS.PRIMARY,
     width: 48,
     height: 48,
     borderRadius: 24,

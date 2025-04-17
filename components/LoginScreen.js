@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useUser } from '../context/UserContext';
 import { FONTS } from '../config/fontConfig';
+import { COLORS } from '../config/colorConfig';
 
 export default function LoginScreen({ onLoginSuccess }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -232,7 +233,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.SERIF,
   },
   authButton: {
-    backgroundColor: '#00a884',
+    backgroundColor: COLORS.PRIMARY,
     borderRadius: 8,
     padding: 15,
     alignItems: 'center',
@@ -249,7 +250,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   switchButtonText: {
-    color: '#00a884',
+    color: COLORS.PRIMARY,
     fontSize: 14,
     fontFamily: FONTS.SERIF,
   },

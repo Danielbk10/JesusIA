@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ScrollView, Image, Switch } from 'react-native';
 import { useUser } from '../context/UserContext';
 import { useCredits } from '../context/CreditsContext';
+import { COLORS } from '../config/colorConfig';
+import { FONTS } from '../config/fontConfig';
 
 export default function ProfileModal({ onClose, onLogout }) {
   const { user, updateUser } = useUser();
@@ -91,7 +93,7 @@ export default function ProfileModal({ onClose, onLogout }) {
           <Switch
             value={notifications}
             onValueChange={setNotifications}
-            trackColor={{ false: '#444', true: '#00a884' }}
+            trackColor={{ false: '#444', true: COLORS.PRIMARY }}
             thumbColor={notifications ? '#fff' : '#f4f3f4'}
           />
         </View>
@@ -101,7 +103,7 @@ export default function ProfileModal({ onClose, onLogout }) {
           <Switch
             value={darkMode}
             onValueChange={setDarkMode}
-            trackColor={{ false: '#444', true: '#00a884' }}
+            trackColor={{ false: '#444', true: COLORS.PRIMARY }}
             thumbColor={darkMode ? '#fff' : '#f4f3f4'}
           />
         </View>
@@ -156,7 +158,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#00a884',
+    backgroundColor: COLORS.PRIMARY,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 30,
@@ -205,7 +207,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   saveButton: {
-    backgroundColor: '#00a884',
+    backgroundColor: COLORS.PRIMARY,
     marginLeft: 10,
   },
   buttonText: {
@@ -240,7 +242,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   infoValue: {
-    color: '#00a884',
+    color: COLORS.PRIMARY,
     fontSize: 16,
     fontWeight: 'bold',
   },

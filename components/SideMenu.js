@@ -10,6 +10,8 @@ import {
   FlatList
 } from 'react-native';
 import { useUser } from '../context/UserContext';
+import { COLORS } from '../config/colorConfig';
+import { FONTS } from '../config/fontConfig';
 
 export default function SideMenu({ onClose, onSelectChat, onOpenPlans }) {
   const { user } = useUser();
@@ -121,8 +123,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#fff',
+    color: COLORS.TEXT_PRIMARY,
     letterSpacing: 1,
+    fontFamily: FONTS.SERIF,
   },
   closeButton: {
     width: 30,
@@ -196,7 +199,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   plansButton: {
-    backgroundColor: '#00a884',
+    backgroundColor: COLORS.PRIMARY,
     margin: 16,
     padding: 16,
     borderRadius: 8,

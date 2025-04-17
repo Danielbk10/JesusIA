@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useCredits } from '../context/CreditsContext';
+import { COLORS } from '../config/colorConfig';
+import { FONTS } from '../config/fontConfig';
 
 export default function BottomBar({ onOpenPlans }) {
   const { credits, plan } = useCredits();
@@ -45,12 +47,13 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   creditsValue: {
-    color: '#00a884',
+    color: COLORS.PRIMARY,
     fontSize: 16,
     fontWeight: 'bold',
+    fontFamily: FONTS.SERIF,
   },
   plansButton: {
-    backgroundColor: '#00a884',
+    backgroundColor: COLORS.PRIMARY,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -59,5 +62,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: 'bold',
+    fontFamily: FONTS.SERIF,
   },
 });

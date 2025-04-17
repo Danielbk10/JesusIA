@@ -4,6 +4,7 @@ import { Audio } from 'expo-av';
 import { MicIcon } from './Icon';
 import { useCredits } from '../context/CreditsContext';
 import { transcribeAudio } from '../services/apiService';
+import { COLORS } from '../config/colorConfig';
 
 export default function AudioButton({ onSendAudio }) {
   const [recording, setRecording] = useState(null);
@@ -336,7 +337,7 @@ export default function AudioButton({ onSendAudio }) {
         onPressIn={startRecording}
         onPressOut={stopRecording}
       >
-        <MicIcon size={24} color={isRecording ? '#ff4040' : '#fff'} />
+        <MicIcon size={24} color={isRecording ? '#ff4040' : COLORS.PRIMARY} />
       </TouchableOpacity>
     </View>
   );
@@ -347,7 +348,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
   button: {
-    backgroundColor: '#00a884',
+    backgroundColor: COLORS.PRIMARY,
     width: 48,
     height: 48,
     borderRadius: 24,
