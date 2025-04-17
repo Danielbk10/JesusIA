@@ -1,16 +1,18 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-  ImageBackground,
-  Alert,
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  FlatList, 
+  StyleSheet, 
+  KeyboardAvoidingView, 
+  Platform, 
+  ActivityIndicator, 
+  ImageBackground, 
+  Alert, 
+  ScrollView, 
+  Image 
 } from 'react-native';
 import { SendIcon } from './Icon';
 import AudioButton from './AudioButton';
@@ -262,11 +264,16 @@ export default function ChatScreen({ currentChat }) {
   };
 
   return (
-    <KeyboardAvoidingView
+    <ImageBackground
+      source={require('../assets/images/tree_background.png')}
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      imageStyle={styles.backgroundImageStyle}
     >
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      >
       <FlatList
         ref={flatListRef}
         data={messages}
@@ -303,15 +310,21 @@ export default function ChatScreen({ currentChat }) {
           <AudioButton onSendAudio={handleAudioMessage} />
         )}
       </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
-    paddingBottom: 8,
+    padding: 10,
+  },
+  backgroundImageStyle: {
+    opacity: 0.1,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   messagesContainer: {
     padding: 16,
