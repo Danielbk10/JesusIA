@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Modal, SafeAreaView, ImageBackground, Text, TouchableOpacity, Alert, Platform, StatusBar as RNStatusBar } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, Modal, SafeAreaView, ImageBackground, Text, TouchableOpacity, Alert, Platform, StatusBar as RNStatusBar, Animated } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { UserProvider } from './context/UserContext';
 import { CreditsProvider } from './context/CreditsContext';
@@ -18,6 +18,7 @@ export default function App() {
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [sideMenuVisible, setSideMenuVisible] = useState(false);
+  const slideAnim = useRef(new Animated.Value(-300)).current;
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentChat, setCurrentChat] = useState(null);
   
@@ -50,6 +51,23 @@ export default function App() {
     setCurrentChat(chat);
     // Aqui você poderia carregar o histórico de mensagens do chat selecionado
   };
+  
+  // Função para animar a abertura do menu lateral
+  useEffect(() => {
+    if (sideMenuVisible) {
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: -300,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [sideMenuVisible]);
 
   // Banner removido conforme solicitado
 
@@ -105,20 +123,29 @@ export default function App() {
                 
                 {/* Menu lateral (drawer) */}
                 <Modal
-                  animationType="slide"
+                  animationType="none"
                   transparent={true}
                   visible={sideMenuVisible}
                   onRequestClose={() => setSideMenuVisible(false)}
                 >
-                  <View style={styles.sideMenuContainer}>
-                    <SideMenu 
-                      onClose={() => setSideMenuVisible(false)}
-                      onSelectChat={handleSelectChat}
-                      onOpenPlans={() => {
-                        setSideMenuVisible(false);
-                        setPlansModalVisible(true);
-                      }}
+                  <View style={styles.sideMenuOverlay}>
+                    <TouchableOpacity 
+                      style={styles.sideMenuBackdrop}
+                      activeOpacity={1}
+                      onPress={() => setSideMenuVisible(false)}
                     />
+                    <Animated.View style={[styles.sideMenuWrapper, {
+                      transform: [{ translateX: slideAnim }]
+                    }]}>
+                      <SideMenu 
+                        onClose={() => setSideMenuVisible(false)}
+                        onSelectChat={handleSelectChat}
+                        onOpenPlans={() => {
+                          setSideMenuVisible(false);
+                          setPlansModalVisible(true);
+                        }}
+                      />
+                    </Animated.View>
                   </View>
                 </Modal>
                 
@@ -160,8 +187,21 @@ const styles = StyleSheet.create({
     opacity: 0.1,
     resizeMode: 'contain',
   },
-  sideMenuContainer: {
+  sideMenuOverlay: {
     flex: 1,
     flexDirection: 'row',
+  },
+  sideMenuBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  sideMenuWrapper: {
+    width: '80%',
+    backgroundColor: '#121212',
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 5,
   },
 });
