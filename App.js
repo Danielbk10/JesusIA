@@ -51,16 +51,7 @@ export default function App() {
     // Aqui você poderia carregar o histórico de mensagens do chat selecionado
   };
 
-  const renderStatusBar = (
-    <View style={styles.statusBar}>
-      <Text style={styles.statusText}>
-        Suas perguntas gratuitas acabaram
-      </Text>
-      <View style={styles.premiumButton}>
-        <Text style={styles.premiumButtonText}>Premium por R$14,90/mês</Text>
-      </View>
-    </View>
-  );
+  // Banner removido conforme solicitado
 
   return (
     <UserProvider>
@@ -72,7 +63,7 @@ export default function App() {
             <LoginScreen onLoginSuccess={handleLogin} />
           ) : (
             <>
-              {renderStatusBar}
+              {/* Banner removido */}
               
               <BackgroundImage>
                 <Header 
@@ -155,31 +146,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  statusBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#000',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#222',
-  },
-  statusText: {
-    color: '#fff',
-    fontSize: 12,
-  },
-  premiumButton: {
-    backgroundColor: '#00a884',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  premiumButtonText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
+  // Estilos do banner removidos
   backgroundImage: {
     flex: 1,
     backgroundColor: '#000',
