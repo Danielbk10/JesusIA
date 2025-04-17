@@ -129,11 +129,6 @@ export default function App() {
                   onRequestClose={() => setSideMenuVisible(false)}
                 >
                   <View style={styles.sideMenuOverlay}>
-                    <TouchableOpacity 
-                      style={styles.sideMenuBackdrop}
-                      activeOpacity={1}
-                      onPress={() => setSideMenuVisible(false)}
-                    />
                     <Animated.View style={[styles.sideMenuWrapper, {
                       transform: [{ translateX: slideAnim }]
                     }]}>
@@ -146,6 +141,11 @@ export default function App() {
                         }}
                       />
                     </Animated.View>
+                    <TouchableOpacity 
+                      style={styles.sideMenuBackdrop}
+                      activeOpacity={1}
+                      onPress={() => setSideMenuVisible(false)}
+                    />
                   </View>
                 </Modal>
                 
@@ -194,6 +194,12 @@ const styles = StyleSheet.create({
   sideMenuBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 5,
   },
   sideMenuWrapper: {
     width: '80%',
@@ -203,5 +209,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.5,
     shadowRadius: 4,
     elevation: 5,
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    zIndex: 10,
   },
 });
