@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Modal, SafeAreaView, ImageBackground, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, Modal, SafeAreaView, ImageBackground, Text, TouchableOpacity, Alert, Platform, StatusBar as RNStatusBar } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { UserProvider } from './context/UserContext';
 import { CreditsProvider } from './context/CreditsContext';
@@ -56,7 +56,8 @@ export default function App() {
   return (
     <UserProvider>
       <CreditsProvider>
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
+          <View style={styles.statusBarSpace} />
           <StatusBar style="light" />
           
           {!isLoggedIn ? (
@@ -135,7 +136,7 @@ export default function App() {
               </BackgroundImage>
             </>
           )}
-        </SafeAreaView>
+        </View>
       </CreditsProvider>
     </UserProvider>
   );
@@ -144,6 +145,10 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000',
+  },
+  statusBarSpace: {
+    height: Platform.OS === 'ios' ? 50 : RNStatusBar.currentHeight + 10,
     backgroundColor: '#000',
   },
   // Estilos do banner removidos

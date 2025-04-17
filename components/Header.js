@@ -52,6 +52,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: 'transparent',
+    marginBottom: 8,
   },
   menuButton: {
     width: 40,
