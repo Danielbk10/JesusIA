@@ -249,19 +249,36 @@ export default function AudioButton({ onSendAudio }) {
       
       console.log('URI de áudio válido:', uri);
       
-      // Mostrar um indicador de que está processando o áudio
-      Alert.alert(
-        'Processando áudio',
-        'Convertendo sua mensagem de voz em texto...',
-        [],
-        { cancelable: false }
-      );
+      // Variável para armazenar a referência do alerta
+      let alertRef;
+      
+      // Função para mostrar o alerta e retornar uma promessa que será resolvida quando o alerta for fechado
+      const showProcessingAlert = () => {
+        return new Promise((resolve) => {
+          // Mostrar o alerta com um botão escondido que resolverá a promessa
+          alertRef = Alert.alert(
+            'Processando áudio',
+            'Convertendo sua mensagem de voz em texto...',
+            [
+              {
+                text: 'Fechar',
+                onPress: () => resolve(),
+                style: 'cancel'
+              }
+            ],
+            { cancelable: true, onDismiss: () => resolve() }
+          );
+        });
+      };
+      
+      // Mostrar o alerta de processamento
+      const alertPromise = showProcessingAlert();
       
       // Tentar transcrever o áudio usando a API Whisper
       const result = await transcribeAudio(uri);
       
-      // Fechar o alerta de processamento
-      Alert.dismiss();
+      // Simular um pequeno atraso para dar tempo de ver o alerta
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       if (result.success) {
         // Se a transcrição foi bem-sucedida, enviar para o chat
