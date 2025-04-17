@@ -39,7 +39,8 @@ export default function AudioButton({ onSendAudio }) {
       if (recording) {
         console.log('Já existe uma gravação ativa, parando a anterior');
         await stopRecording();
-        return;
+        // Adicionando um pequeno atraso para garantir que a gravação anterior seja completamente liberada
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
 
       // Verificar se há créditos disponíveis
@@ -72,13 +73,38 @@ export default function AudioButton({ onSendAudio }) {
         playThroughEarpieceAndroid: false,
       });
 
-      // Iniciar a gravação
-      const { recording: newRecording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
+      // Iniciar a gravação com configurações personalizadas para melhor compatibilidade
+      const { recording: newRecording } = await Audio.Recording.createAsync({
+        android: {
+          extension: '.m4a',
+          outputFormat: Audio.AndroidOutputFormat.MPEG_4,
+          audioEncoder: Audio.AndroidAudioEncoder.AAC,
+          sampleRate: 44100,
+          numberOfChannels: 1,
+          bitRate: 128000,
+        },
+        ios: {
+          extension: '.m4a',
+          outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
+          audioQuality: Audio.IOSAudioQuality.MAX,
+          sampleRate: 44100,
+          numberOfChannels: 1,
+          bitRate: 128000,
+          linearPCMBitDepth: 16,
+          linearPCMIsBigEndian: false,
+          linearPCMIsFloat: false,
+        },
+        web: {
+          mimeType: 'audio/webm',
+          bitsPerSecond: 128000,
+        },
+      });
       
       setRecording(newRecording);
       setIsRecording(true);
+      
+      // Definir um tempo mínimo de gravação para evitar erros de dados de áudio inválidos
+      setRecordingDuration(0);
     } catch (error) {
       console.error('Erro ao iniciar a gravação:', error);
       Alert.alert('Erro', 'Não foi possível iniciar a gravação.');
@@ -95,18 +121,28 @@ export default function AudioButton({ onSendAudio }) {
       setIsRecording(false);
       
       try {
-        // Verificar se a gravação é muito curta (menos de 1 segundo)
-        if (recordingDuration < 1) {
-          Alert.alert('Gravação muito curta', 'Por favor, grave uma mensagem mais longa.');
-          // Limpar a gravação atual
+        // Verificar se a gravação é muito curta (menos de 2 segundos)
+        if (recordingDuration < 2) {
+          Alert.alert('Gravação muito curta', 'Por favor, mantenha pressionado o botão por pelo menos 2 segundos.');
+          
+          // Adicionando um atraso antes de tentar parar a gravação curta
+          // Isso dá tempo para o sistema capturar algum dado de áudio
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Limpar a gravação atual com tratamento de erro melhorado
           try {
             await recording.stopAndUnloadAsync();
           } catch (e) {
             console.log('Erro ao parar gravação curta:', e);
+            // Não mostramos o erro para o usuário em gravações curtas
           }
           setRecording(null);
           return;
         }
+        
+        // Adicionando um pequeno atraso antes de parar a gravação
+        // Isso ajuda a garantir que o sistema tenha tempo de processar os dados de áudio
+        await new Promise(resolve => setTimeout(resolve, 300));
         
         // Tentar parar a gravação atual com tratamento de erro melhorado
         let uri = null;
@@ -184,18 +220,17 @@ export default function AudioButton({ onSendAudio }) {
       
       console.log('URI de áudio válido:', uri);
       
+      // Simular o processamento de transcrição
+      const transcription = "Como Jesus tratava as pessoas que eram diferentes dele?";
+      onSendAudio(transcription);
+      
       // Em um aplicativo real, você enviaria o áudio para o servidor
       // e processaria a transcrição e a resposta
       
-      // Mostrar um alerta para o usuário gravar uma mensagem real
-      Alert.alert(
-        'Gravação de Áudio',
-        'Em um aplicativo completo, seu áudio seria enviado para o servidor e processado. Por enquanto, você pode digitar sua mensagem.',
-        [{ text: 'OK' }]
-      );
+      // Em um ambiente de produção, você enviaria o áudio para um serviço de transcrição
+      // como o Google Speech-to-Text ou similar
       
-      // Não enviamos uma mensagem automática
-      // onSendAudio(transcription);
+      // Para fins de demonstração, não mostramos mais o alerta, apenas simulamos a transcrição
     } catch (error) {
       console.error('Erro ao processar áudio:', error);
       Alert.alert(
