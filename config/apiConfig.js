@@ -1,5 +1,5 @@
 // Configurações da API OpenAI
-export const OPENAI_API_KEY = 'SUA_CHAVE_API_AQUI'; // Substitua pela sua chave de API da OpenAI
+export const OPENAI_API_KEY = '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';
 
 // Endpoints da API
 export const API_ENDPOINTS = {
