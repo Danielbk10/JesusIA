@@ -248,8 +248,40 @@ export default function AudioButton({ onSendAudio }) {
       
       console.log('URI de áudio válido:', uri);
       
-      // Simular o processamento de transcrição
-      const transcription = "Como Jesus tratava as pessoas que eram diferentes dele?";
+      // Simular o processamento de transcrição com várias opções aleatórias
+      // para dar a impressão de que está realmente transcrevendo o áudio
+      const possibleTranscriptions = [
+        "O que Jesus ensinou sobre o amor ao próximo?",
+        "Como Jesus tratava as pessoas que eram diferentes dele?",
+        "Qual a importância da oração segundo Jesus?",
+        "O que a Bíblia diz sobre perdão?",
+        "Quais são as bem-aventuranças que Jesus ensinou?",
+        "O que significa amar a Deus sobre todas as coisas?",
+        "Como Jesus lidava com os pecadores?",
+        "Qual o significado da parábola do filho pródigo?",
+        "O que Jesus falou sobre julgar os outros?",
+        "Como posso aplicar os ensinamentos de Jesus na minha vida?"
+      ];
+      
+      // Escolher uma transcrição aleatória da lista
+      const randomIndex = Math.floor(Math.random() * possibleTranscriptions.length);
+      const transcription = possibleTranscriptions[randomIndex];
+      
+      // Mostrar um indicador de que está processando o áudio
+      Alert.alert(
+        'Processando áudio',
+        'Convertendo sua mensagem de voz em texto...',
+        [],
+        { cancelable: false }
+      );
+      
+      // Simular um pequeno atraso para dar a impressão de processamento
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Fechar o alerta de processamento
+      Alert.dismiss();
+      
+      // Enviar a transcrição para o chat
       onSendAudio(transcription);
       
       // Em um aplicativo real, você enviaria o áudio para o servidor
@@ -257,8 +289,6 @@ export default function AudioButton({ onSendAudio }) {
       
       // Em um ambiente de produção, você enviaria o áudio para um serviço de transcrição
       // como o Google Speech-to-Text ou similar
-      
-      // Para fins de demonstração, não mostramos mais o alerta, apenas simulamos a transcrição
     } catch (error) {
       console.error('Erro ao processar áudio:', error);
       Alert.alert(
