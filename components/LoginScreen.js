@@ -13,6 +13,7 @@ import {
   ImageBackground
 } from 'react-native';
 import { useUser } from '../context/UserContext';
+import { FONTS } from '../config/fontConfig';
 
 export default function LoginScreen({ onLoginSuccess }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -209,6 +210,7 @@ const styles = StyleSheet.create({
     color: '#aaa',
     textAlign: 'center',
     marginTop: 10,
+    fontFamily: FONTS.SERIF,
   },
   formContainer: {
     marginBottom: 30,
@@ -218,6 +220,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 20,
+    fontFamily: FONTS.SERIF,
   },
   input: {
     backgroundColor: '#222',
@@ -226,6 +229,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     color: '#fff',
     fontSize: 16,
+    fontFamily: FONTS.SERIF,
   },
   authButton: {
     backgroundColor: '#00a884',
@@ -238,6 +242,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+    fontFamily: FONTS.SERIF,
   },
   switchButton: {
     marginTop: 20,
@@ -246,6 +251,7 @@ const styles = StyleSheet.create({
   switchButtonText: {
     color: '#00a884',
     fontSize: 14,
+    fontFamily: FONTS.SERIF,
   },
   socialContainer: {
     alignItems: 'center',
@@ -254,6 +260,7 @@ const styles = StyleSheet.create({
     color: '#aaa',
     fontSize: 14,
     marginBottom: 20,
+    fontFamily: FONTS.SERIF,
   },
   socialButtons: {
     flexDirection: 'row',
@@ -270,5 +277,6 @@ const styles = StyleSheet.create({
   socialButtonText: {
     color: '#fff',
     fontSize: 16,
+    fontFamily: FONTS.SERIF,
   },
 });

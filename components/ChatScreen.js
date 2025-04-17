@@ -18,6 +18,7 @@ import { useCredits } from '../context/CreditsContext';
 import { useUser } from '../context/UserContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getChatResponse } from '../services/apiService';
+import { FONTS } from '../config/fontConfig';
 
 export default function ChatScreen({ currentChat }) {
   const [message, setMessage] = useState('');
@@ -338,6 +339,7 @@ const styles = StyleSheet.create({
   },
   messageText: {
     color: '#fff',
+    fontFamily: FONTS.SERIF,
     fontSize: 16,
   },
   timestamp: {
@@ -365,13 +367,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   input: {
-    flex: 1,
-    backgroundColor: '#262626',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 25,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
     color: '#fff',
-    maxHeight: 100,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    flex: 1,
+    marginRight: 10,
+    fontFamily: FONTS.SERIF,
     fontSize: 16,
   },
   sendButton: {
