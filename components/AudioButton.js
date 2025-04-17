@@ -38,9 +38,16 @@ export default function AudioButton({ onSendAudio }) {
       // Verificar se já existe uma gravação ativa
       if (recording) {
         console.log('Já existe uma gravação ativa, parando a anterior');
-        await stopRecording();
+        try {
+          await stopRecording();
+        } catch (err) {
+          // Ignorar erros ao parar gravação anterior, apenas limpar o estado
+          console.log('Erro ao parar gravação anterior, limpando estado');
+          setRecording(null);
+          setIsRecording(false);
+        }
         // Adicionando um pequeno atraso para garantir que a gravação anterior seja completamente liberada
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
 
       // Verificar se há créditos disponíveis
@@ -118,7 +125,12 @@ export default function AudioButton({ onSendAudio }) {
     try {
       if (!recording) return;
 
+      // Guardar uma referência local à gravação atual antes de limpar o estado
+      const currentRecording = recording;
+      
+      // Limpar o estado imediatamente para evitar chamadas múltiplas
       setIsRecording(false);
+      setRecording(null);
       
       try {
         // Verificar se a gravação é muito curta (menos de 2 segundos)
@@ -131,33 +143,50 @@ export default function AudioButton({ onSendAudio }) {
           
           // Limpar a gravação atual com tratamento de erro melhorado
           try {
-            await recording.stopAndUnloadAsync();
+            await currentRecording.stopAndUnloadAsync();
           } catch (e) {
-            console.log('Erro ao parar gravação curta:', e);
+            // Ignorar erros específicos que são esperados
+            if (e.message && (
+              e.message.includes('already been unloaded') ||
+              e.message.includes('does not exist') ||
+              e.message.includes('no valid audio data')
+            )) {
+              console.log('Erro esperado ao parar gravação curta:', e.message);
+            } else {
+              console.log('Erro ao parar gravação curta:', e);
+            }
             // Não mostramos o erro para o usuário em gravações curtas
           }
-          setRecording(null);
           return;
         }
         
         // Adicionando um pequeno atraso antes de parar a gravação
         // Isso ajuda a garantir que o sistema tenha tempo de processar os dados de áudio
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         // Tentar parar a gravação atual com tratamento de erro melhorado
         let uri = null;
         try {
-          await recording.stopAndUnloadAsync();
-          uri = recording.getURI();
+          await currentRecording.stopAndUnloadAsync();
+          uri = currentRecording.getURI();
         } catch (stopError) {
-          console.error('Erro ao parar gravação:', stopError);
-          Alert.alert(
-            'Erro na gravação',
-            'Houve um problema ao processar o áudio. Por favor, tente novamente.',
-            [{ text: 'OK' }]
-          );
-          setRecording(null);
-          return;
+          // Verificar se é um erro esperado
+          if (stopError.message && (
+            stopError.message.includes('already been unloaded') ||
+            stopError.message.includes('does not exist') ||
+            stopError.message.includes('no valid audio data')
+          )) {
+            console.log('Erro esperado ao parar gravação:', stopError.message);
+            return; // Já limpamos o estado no início da função
+          } else {
+            console.error('Erro ao parar gravação:', stopError);
+            Alert.alert(
+              'Erro na gravação',
+              'Houve um problema ao processar o áudio. Por favor, tente novamente.',
+              [{ text: 'OK' }]
+            );
+            return;
+          }
         }
         
         // Verificar se temos um URI válido
@@ -195,8 +224,7 @@ export default function AudioButton({ onSendAudio }) {
         );
       }
       
-      // Limpar o estado em qualquer caso
-      setRecording(null);
+      // O estado já foi limpo no início da função
     } catch (error) {
       console.error('Erro ao parar a gravação:', error);
       Alert.alert('Erro', 'Não foi possível finalizar a gravação.');
