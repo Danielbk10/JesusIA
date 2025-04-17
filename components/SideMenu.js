@@ -51,24 +51,7 @@ export default function SideMenu({ onClose, onSelectChat, onOpenPlans }) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.userInfo}>
-          {user?.photoURL ? (
-            <Image 
-              source={{ uri: user.photoURL }} 
-              style={styles.profileImage} 
-            />
-          ) : (
-            <View style={styles.profilePlaceholder}>
-              <Text style={styles.profileInitial}>
-                {user?.displayName ? user.displayName.charAt(0).toUpperCase() : '?'}
-              </Text>
-            </View>
-          )}
-          <View style={styles.userDetails}>
-            <Text style={styles.userName}>{user?.displayName || 'Usuário'}</Text>
-            <Text style={styles.userEmail}>{user?.email || 'usuario@email.com'}</Text>
-          </View>
-        </View>
+        <Text style={styles.title}>JESUS.IA</Text>
         
         <TouchableOpacity 
           style={styles.closeButton}
@@ -135,39 +118,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#333',
   },
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-  },
-  profilePlaceholder: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#00a884',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  profileInitial: {
-    color: '#fff',
-    fontSize: 24,
+  title: {
+    fontSize: 22,
     fontWeight: 'bold',
-  },
-  userDetails: {
-    marginLeft: 12,
-  },
-  userName: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  userEmail: {
-    color: '#aaa',
-    fontSize: 14,
+    letterSpacing: 1,
   },
   closeButton: {
     width: 30,
