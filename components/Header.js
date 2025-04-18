@@ -80,8 +80,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoImage: {
-    width: 150,
-    height: 40,
+    width: 180,
+    height: 50,
     marginBottom: 2,
   },
   // Subtítulo removido conforme solicitado
