@@ -337,7 +337,7 @@ export default function AudioButton({ onSendAudio }) {
         onPressIn={startRecording}
         onPressOut={stopRecording}
       >
-        <MicIcon size={24} color={isRecording ? '#ff4040' : COLORS.PRIMARY} />
+        <MicIcon size={24} color="#FFFFFF" />
       </TouchableOpacity>
     </View>
   );
