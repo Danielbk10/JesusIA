@@ -26,7 +26,6 @@ export default function Header({ onPressProfile, onPressMenu }) {
           style={styles.logoImage} 
           resizeMode="contain"
         />
-        <Text style={styles.subtitle}>Representação consciência de jesus segundo a bíblia</Text>
       </View>
       
       <TouchableOpacity 
@@ -85,12 +84,7 @@ const styles = StyleSheet.create({
     height: 40,
     marginBottom: 2,
   },
-  subtitle: {
-    fontSize: 10,
-    color: '#aaa',
-    textAlign: 'center',
-    marginTop: 2,
-  },
+  // Subtítulo removido conforme solicitado
   profileButton: {
     marginLeft: 16,
   },
