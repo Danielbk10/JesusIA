@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useUser } from '../context/UserContext';
+import { COLORS } from '../config/colorConfig';
+import { FONTS } from '../config/fontConfig';
 
 export default function Header({ onPressProfile, onPressMenu }) {
   const { user } = useUser();
@@ -19,7 +21,11 @@ export default function Header({ onPressProfile, onPressMenu }) {
       </TouchableOpacity>
 
       <View style={styles.titleContainer}>
-        <Text style={styles.title}>JESUS.IA</Text>
+        <Image 
+          source={require('../assets/images/jesus-logo.png')} 
+          style={styles.logoImage} 
+          resizeMode="contain"
+        />
         <Text style={styles.subtitle}>Representação consciência de jesus segundo a bíblia</Text>
       </View>
       
@@ -74,11 +80,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
   },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#fff',
-    letterSpacing: 1,
+  logoImage: {
+    width: 150,
+    height: 40,
+    marginBottom: 2,
   },
   subtitle: {
     fontSize: 10,
@@ -100,7 +105,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#00a884',
+    backgroundColor: COLORS.PRIMARY,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
