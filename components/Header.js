@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
     backgroundColor: 'transparent',
     marginBottom: 8,
   },
@@ -78,10 +78,11 @@ const styles = StyleSheet.create({
   titleContainer: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   logoImage: {
-    width: 180,
-    height: 50,
+    width: 200,
+    height: 80,
     marginBottom: 2,
   },
   // Subtítulo removido conforme solicitado
