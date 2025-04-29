@@ -16,10 +16,24 @@ export default function AudioButton({ onSendAudio }) {
   useEffect(() => {
     return () => {
       if (recording) {
-        stopRecording();
+        cleanupRecording();
       }
     };
   }, []);
+
+  // Função para limpar gravação sem tentar processá-la
+  const cleanupRecording = async () => {
+    if (!recording) return;
+    
+    try {
+      await recording.stopAndUnloadAsync();
+    } catch (error) {
+      console.log('Erro ao limpar gravação:', error);
+    } finally {
+      setRecording(null);
+      setIsRecording(false);
+    }
+  };
 
   // Atualizar a duração da gravação
   useEffect(() => {
@@ -37,18 +51,13 @@ export default function AudioButton({ onSendAudio }) {
 
   const startRecording = async () => {
     try {
-      // Verificar se já existe uma gravação ativa
+      // Se já estiver gravando, não faz nada
+      if (isRecording) return;
+      
+      // Limpar qualquer gravação anterior
       if (recording) {
-        console.log('Já existe uma gravação ativa, parando a anterior');
-        try {
-          await stopRecording();
-        } catch (err) {
-          // Ignorar erros ao parar gravação anterior, apenas limpar o estado
-          console.log('Erro ao parar gravação anterior, limpando estado');
-          setRecording(null);
-          setIsRecording(false);
-        }
-        // Adicionando um pequeno atraso para garantir que a gravação anterior seja completamente liberada
+        await cleanupRecording();
+        // Esperar um pouco para garantir que os recursos foram liberados
         await new Promise(resolve => setTimeout(resolve, 500));
       }
 
@@ -109,10 +118,9 @@ export default function AudioButton({ onSendAudio }) {
         },
       });
       
+      console.log('Gravação iniciada com sucesso');
       setRecording(newRecording);
       setIsRecording(true);
-      
-      // Definir um tempo mínimo de gravação para evitar erros de dados de áudio inválidos
       setRecordingDuration(0);
     } catch (error) {
       console.error('Erro ao iniciar a gravação:', error);
@@ -124,171 +132,94 @@ export default function AudioButton({ onSendAudio }) {
   };
 
   const stopRecording = async () => {
-    try {
-      if (!recording) return;
-
-      // Guardar uma referência local à gravação atual antes de limpar o estado
-      const currentRecording = recording;
+    // Se não estiver gravando ou não tiver uma gravação ativa, não faz nada
+    if (!isRecording || !recording) return;
+    
+    console.log('Parando gravação...');
+    
+    // Guardar uma referência local à gravação atual
+    const currentRecording = recording;
+    
+    // Atualizar o estado imediatamente para evitar múltiplas chamadas
+    setIsRecording(false);
+    setRecording(null);
+    
+    // Verificar se a gravação é muito curta
+    if (recordingDuration < 2) {
+      console.log('Gravação muito curta, ignorando');
+      Alert.alert('Gravação muito curta', 'Por favor, mantenha o botão pressionado por pelo menos 2 segundos.');
       
-      // Limpar o estado imediatamente para evitar chamadas múltiplas
-      setIsRecording(false);
-      setRecording(null);
-      
+      // Limpar a gravação sem processá-la
       try {
-        // Verificar se a gravação é muito curta (menos de 2 segundos)
-        if (recordingDuration < 2) {
-          Alert.alert('Gravação muito curta', 'Por favor, mantenha pressionado o botão por pelo menos 2 segundos.');
-          
-          // Adicionando um atraso antes de tentar parar a gravação curta
-          // Isso dá tempo para o sistema capturar algum dado de áudio
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // Limpar a gravação atual com tratamento de erro melhorado
-          try {
-            await currentRecording.stopAndUnloadAsync();
-          } catch (e) {
-            // Ignorar erros específicos que são esperados
-            if (e.message && (
-              e.message.includes('already been unloaded') ||
-              e.message.includes('does not exist') ||
-              e.message.includes('no valid audio data')
-            )) {
-              console.log('Erro esperado ao parar gravação curta:', e.message);
-            } else {
-              console.log('Erro ao parar gravação curta:', e);
-            }
-            // Não mostramos o erro para o usuário em gravações curtas
-          }
-          return;
-        }
-        
-        // Adicionando um pequeno atraso antes de parar a gravação
-        // Isso ajuda a garantir que o sistema tenha tempo de processar os dados de áudio
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Tentar parar a gravação atual com tratamento de erro melhorado
-        let uri = null;
-        try {
-          await currentRecording.stopAndUnloadAsync();
-          uri = currentRecording.getURI();
-        } catch (stopError) {
-          // Verificar se é um erro esperado
-          if (stopError.message && (
-            stopError.message.includes('already been unloaded') ||
-            stopError.message.includes('does not exist') ||
-            stopError.message.includes('no valid audio data')
-          )) {
-            console.log('Erro esperado ao parar gravação:', stopError.message);
-            return; // Já limpamos o estado no início da função
-          } else {
-            console.error('Erro ao parar gravação:', stopError);
-            Alert.alert(
-              'Erro na gravação',
-              'Houve um problema ao processar o áudio. Por favor, tente novamente.',
-              [{ text: 'OK' }]
-            );
-            return;
-          }
-        }
-        
-        // Verificar se temos um URI válido
-        if (!uri) {
-          console.error('URI de áudio inválido após gravação');
-          Alert.alert(
-            'Erro na gravação',
-            'Não foi possível obter o áudio gravado. Por favor, tente novamente.',
-            [{ text: 'OK' }]
-          );
-          setRecording(null);
-          return;
-        }
-        
-        // Consumir um crédito
-        const hasCredit = await useCredit();
-        if (!hasCredit) {
-          Alert.alert(
-            'Sem créditos',
-            'Você não tem créditos suficientes para enviar uma mensagem. Assista a um anúncio para ganhar mais créditos ou faça upgrade para um plano premium.',
-            [{ text: 'OK' }]
-          );
-          setRecording(null);
-          return;
-        }
-        
-        // Processar o áudio
-        processAudio(uri);
-      } catch (innerError) {
-        console.error('Erro ao processar a gravação:', innerError);
+        await currentRecording.stopAndUnloadAsync();
+      } catch (error) {
+        console.log('Erro ao parar gravação curta:', error);
+      }
+      return;
+    }
+    
+    try {
+      // Parar a gravação e obter o URI
+      await currentRecording.stopAndUnloadAsync();
+      const uri = currentRecording.getURI();
+      
+      if (!uri) {
+        console.log('Erro: URI não disponível após a gravação');
         Alert.alert(
           'Erro na gravação',
-          'Ocorreu um erro inesperado. Por favor, tente novamente ou use o teclado para digitar sua mensagem.',
-          [{ text: 'OK' }]
-        );
-      }
-      
-      // O estado já foi limpo no início da função
-    } catch (error) {
-      console.error('Erro ao parar a gravação:', error);
-      Alert.alert('Erro', 'Não foi possível finalizar a gravação.');
-      setRecording(null);
-      setIsRecording(false);
-    }
-  };
-
-  const processAudio = async (uri) => {
-    try {
-      // Verificar se o URI é válido
-      if (!uri) {
-        console.log('URI de áudio inválido ou não disponível');
-        Alert.alert(
-          'Gravação não disponível',
-          'Não foi possível processar a gravação. Por favor, tente novamente ou use o teclado para digitar sua mensagem.',
-          [{ text: 'OK' }]
+          'Não foi possível obter o áudio gravado. Por favor, tente novamente.'
         );
         return;
       }
       
       console.log('URI de áudio válido:', uri);
       
-      // Variável para armazenar a referência do alerta
-      let alertRef;
+      // Consumir um crédito
+      const hasCredit = await useCredit();
+      if (!hasCredit) {
+        Alert.alert(
+          'Sem créditos',
+          'Você não tem créditos suficientes para enviar uma mensagem. Assista a um anúncio para ganhar mais créditos ou faça upgrade para um plano premium.'
+        );
+        return;
+      }
       
-      // Função para mostrar o alerta e retornar uma promessa que será resolvida quando o alerta for fechado
-      const showProcessingAlert = () => {
-        return new Promise((resolve) => {
-          // Mostrar o alerta com um botão escondido que resolverá a promessa
-          alertRef = Alert.alert(
-            'Processando áudio',
-            'Convertendo sua mensagem de voz em texto...',
-            [
-              {
-                text: 'Fechar',
-                onPress: () => resolve(),
-                style: 'cancel'
-              }
-            ],
-            { cancelable: true, onDismiss: () => resolve() }
-          );
-        });
-      };
+      // Processar o áudio
+      await processAudio(uri);
+    } catch (error) {
+      console.error('Erro ao parar a gravação:', error);
+      Alert.alert(
+        'Erro na gravação',
+        'Ocorreu um erro ao processar sua gravação. Por favor, tente novamente.'
+      );
+    }
+  };
+
+  const processAudio = async (uri) => {
+    try {
+      if (!uri) {
+        console.error('URI inválido para processamento');
+        Alert.alert(
+          'Gravação não disponível',
+          'Não foi possível processar a gravação. Por favor, tente novamente ou use o teclado para digitar sua mensagem.'
+        );
+        return;
+      }
       
-      // Mostrar o alerta de processamento
-      const alertPromise = showProcessingAlert();
+      console.log('URI de áudio válido:', uri);
       
-      // Tentar transcrever o áudio usando a API Whisper
+      Alert.alert(
+        'Processando áudio',
+        'Convertendo sua mensagem de voz em texto...'
+      );
+      
       const result = await transcribeAudio(uri);
       
-      // Simular um pequeno atraso para dar tempo de ver o alerta
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
       if (result.success) {
-        // Se a transcrição foi bem-sucedida, enviar para o chat
         onSendAudio(result.transcription);
       } else {
-        // Se houve um erro na API, usar a simulação como fallback
         console.log('Erro na API Whisper, usando simulação como fallback:', result.error);
         
-        // Lista de transcrições simuladas
         const possibleTranscriptions = [
           "O que Jesus ensinou sobre o amor ao próximo?",
           "Como Jesus tratava as pessoas que eram diferentes dele?",
@@ -302,19 +233,15 @@ export default function AudioButton({ onSendAudio }) {
           "Como posso aplicar os ensinamentos de Jesus na minha vida?"
         ];
         
-        // Escolher uma transcrição aleatória da lista
         const randomIndex = Math.floor(Math.random() * possibleTranscriptions.length);
         const transcription = possibleTranscriptions[randomIndex];
         
-        // Enviar a transcrição simulada para o chat
         onSendAudio(transcription);
         
-        // Mostrar mensagem informativa sobre a chave de API apenas uma vez
         if (result.error && result.error.includes('Chave de API')) {
           Alert.alert(
             'Configuração Necessária',
-            'Para usar a transcrição real, configure sua chave de API da OpenAI em config/apiConfig.js',
-            [{ text: 'OK' }]
+            'Para usar a transcrição real, configure sua chave de API da OpenAI em config/apiConfig.js'
           );
         }
       }
@@ -334,8 +261,7 @@ export default function AudioButton({ onSendAudio }) {
           styles.button,
           isRecording && styles.recordingButton
         ]}
-        onPressIn={startRecording}
-        onPressOut={stopRecording}
+        onPress={isRecording ? stopRecording : startRecording}
       >
         <MicIcon size={24} color="#FFFFFF" />
       </TouchableOpacity>
