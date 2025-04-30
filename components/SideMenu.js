@@ -7,15 +7,19 @@ import {
   TextInput,
   ScrollView,
   Image,
-  FlatList
+  FlatList,
+  Alert
 } from 'react-native';
 import { useUser } from '../context/UserContext';
+import { useDevotionals } from '../context/DevotionalsContext';
 import { COLORS } from '../config/colorConfig';
 import { FONTS } from '../config/fontConfig';
 
-export default function SideMenu({ onClose, onSelectChat, onOpenPlans }) {
+export default function SideMenu({ onClose, onSelectChat, onOpenPlans, onViewDevotional }) {
   const { user } = useUser();
+  const { devotionals, deleteDevotional } = useDevotionals();
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('chats'); // 'chats' ou 'devotionals'
   
   // Histórico de chats simulado
   const chatHistory = [
@@ -33,6 +37,13 @@ export default function SideMenu({ onClose, onSelectChat, onOpenPlans }) {
         chat.preview.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : chatHistory;
+    
+  // Filtrar devocionais com base na busca
+  const filteredDevotionals = searchQuery
+    ? devotionals.filter(devotional => 
+        devotional.content.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : devotionals;
   
   const renderChatItem = ({ item }) => (
     <TouchableOpacity 
@@ -50,10 +61,60 @@ export default function SideMenu({ onClose, onSelectChat, onOpenPlans }) {
     </TouchableOpacity>
   );
   
+  const renderDevotionalItem = ({ item }) => (
+    <TouchableOpacity 
+      style={styles.chatItem}
+      onPress={() => {
+        if (onViewDevotional) {
+          onViewDevotional(item);
+          onClose();
+        }
+      }}
+    >
+      <View style={styles.chatInfo}>
+        <Text style={styles.chatTitle} numberOfLines={1}>
+          Devocional {new Date(item.timestamp).toLocaleDateString()}
+        </Text>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => confirmDeleteDevotional(item.id)}
+        >
+          <Text style={styles.deleteButtonText}>✕</Text>
+        </TouchableOpacity>
+      </View>
+      <Text style={styles.chatPreview} numberOfLines={3}>{item.content}</Text>
+    </TouchableOpacity>
+  );
+  
+  const confirmDeleteDevotional = (id) => {
+    Alert.alert(
+      'Excluir Devocional',
+      'Tem certeza que deseja excluir este devocional?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Excluir',
+          onPress: () => deleteDevotional(id),
+          style: 'destructive',
+        },
+      ]
+    );
+  };
+  
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>JESUS.IA</Text>
+        <View style={styles.logoContainer}>
+          <Image 
+            source={require('../assets/images/jesus-logo.png')} 
+            style={styles.logoImage} 
+            resizeMode="contain"
+          />
+          <Text style={styles.title}>JESUS.IA</Text>
+        </View>
         
         <TouchableOpacity 
           style={styles.closeButton}
@@ -66,33 +127,72 @@ export default function SideMenu({ onClose, onSelectChat, onOpenPlans }) {
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Buscar conversas..."
+          placeholder={activeTab === 'chats' ? "Buscar conversas..." : "Buscar devocionais..."}
           placeholderTextColor="#999"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
       </View>
       
-      <View style={styles.historyContainer}>
-        <Text style={styles.historyTitle}>Histórico de Conversas</Text>
+      <View style={styles.tabsContainer}>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'chats' && styles.activeTab]}
+          onPress={() => setActiveTab('chats')}
+        >
+          <Text style={[styles.tabText, activeTab === 'chats' && styles.activeTabText]}>Conversas</Text>
+        </TouchableOpacity>
         
-        {filteredChats.length > 0 ? (
-          <FlatList
-            data={filteredChats}
-            renderItem={renderChatItem}
-            keyExtractor={item => item.id}
-            showsVerticalScrollIndicator={false}
-          />
-        ) : (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              {searchQuery 
-                ? 'Nenhuma conversa encontrada' 
-                : 'Nenhuma conversa recente'}
-            </Text>
-          </View>
-        )}
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'devotionals' && styles.activeTab]}
+          onPress={() => setActiveTab('devotionals')}
+        >
+          <Text style={[styles.tabText, activeTab === 'devotionals' && styles.activeTabText]}>Devocionais</Text>
+        </TouchableOpacity>
       </View>
+      
+      {activeTab === 'chats' ? (
+        <View style={styles.historyContainer}>
+          <Text style={styles.historyTitle}>Histórico de Conversas</Text>
+          
+          {filteredChats.length > 0 ? (
+            <FlatList
+              data={filteredChats}
+              renderItem={renderChatItem}
+              keyExtractor={item => item.id}
+              showsVerticalScrollIndicator={false}
+            />
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>
+                {searchQuery 
+                  ? 'Nenhuma conversa encontrada' 
+                  : 'Nenhuma conversa recente'}
+              </Text>
+            </View>
+          )}
+        </View>
+      ) : (
+        <View style={styles.historyContainer}>
+          <Text style={styles.historyTitle}>Devocionais Salvos</Text>
+          
+          {filteredDevotionals.length > 0 ? (
+            <FlatList
+              data={filteredDevotionals}
+              renderItem={renderDevotionalItem}
+              keyExtractor={item => item.id}
+              showsVerticalScrollIndicator={false}
+            />
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>
+                {searchQuery 
+                  ? 'Nenhum devocional encontrado' 
+                  : 'Nenhum devocional salvo'}
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
       
       <TouchableOpacity 
         style={styles.plansButton}
@@ -119,6 +219,15 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#333',
+  },
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoImage: {
+    width: 30,
+    height: 30,
+    marginRight: 8,
   },
   title: {
     fontSize: 22,
@@ -152,6 +261,28 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
+  tabsContainer: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  activeTab: {
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.PRIMARY,
+  },
+  tabText: {
+    color: '#aaa',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  activeTabText: {
+    color: '#fff',
+  },
   historyContainer: {
     flex: 1,
     padding: 16,
@@ -173,6 +304,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  deleteButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 0, 0, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  deleteButtonText: {
+    color: '#ff6666',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   chatTitle: {
     color: '#fff',

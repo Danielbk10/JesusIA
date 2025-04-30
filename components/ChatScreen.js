@@ -12,12 +12,15 @@ import {
   ImageBackground, 
   Alert, 
   ScrollView, 
-  Image 
+  Image,
+  Pressable
 } from 'react-native';
 import { SendIcon } from './Icon';
 import AudioButton from './AudioButton';
+import ShareCard from './ShareCard';
 import { useCredits } from '../context/CreditsContext';
 import { useUser } from '../context/UserContext';
+import { useDevotionals } from '../context/DevotionalsContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getChatResponse } from '../services/apiService';
 import { FONTS } from '../config/fontConfig';
@@ -27,8 +30,11 @@ export default function ChatScreen({ currentChat }) {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedText, setSelectedText] = useState('');
+  const [showShareCard, setShowShareCard] = useState(false);
   const { useCredit, credits, plan } = useCredits();
   const { user } = useUser();
+  const { saveDevotional } = useDevotionals();
   const flatListRef = useRef(null);
 
   // Carregar mensagens do armazenamento local ou do chat selecionado
@@ -236,6 +242,23 @@ export default function ChatScreen({ currentChat }) {
   const handleAudioMessage = (transcription) => {
     sendMessage(transcription);
   };
+  
+  const handleTextSelection = (text) => {
+    if (text.trim().length > 0) {
+      setSelectedText(text);
+      setShowShareCard(true);
+    }
+  };
+  
+  const handleSaveDevotional = async () => {
+    const success = await saveDevotional(selectedText);
+    if (success) {
+      Alert.alert('Sucesso', 'Devocional salvo com sucesso!');
+    } else {
+      Alert.alert('Erro', 'Não foi possível salvar o devocional.');
+    }
+    setShowShareCard(false);
+  };
 
   const renderMessage = ({ item }) => {
     const isAI = item.sender === 'ai';
@@ -252,7 +275,17 @@ export default function ChatScreen({ currentChat }) {
             isAI ? styles.aiMessageBubble : styles.userMessageBubble,
           ]}
         >
-          <Text style={styles.messageText}>{item.text}</Text>
+          {isAI ? (
+            <Pressable
+              onLongPress={() => handleTextSelection(item.text)}
+              delayLongPress={500}
+            >
+              <Text style={styles.messageText} selectable={true}>{item.text}</Text>
+              <Text style={styles.selectionHint}>Pressione e segure para compartilhar</Text>
+            </Pressable>
+          ) : (
+            <Text style={styles.messageText}>{item.text}</Text>
+          )}
           <Text style={styles.timestamp}>
             {new Date(item.timestamp).toLocaleTimeString([], {
               hour: '2-digit',
@@ -311,6 +344,14 @@ export default function ChatScreen({ currentChat }) {
           <AudioButton onSendAudio={handleAudioMessage} />
         )}
       </View>
+      
+      {showShareCard && (
+        <ShareCard 
+          content={selectedText} 
+          onSave={handleSaveDevotional}
+          onClose={() => setShowShareCard(false)}
+        />
+      )}
       </KeyboardAvoidingView>
     </ImageBackground>
   );
@@ -355,6 +396,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: FONTS.SERIF,
     fontSize: 16,
+  },
+  selectionHint: {
+    color: 'rgba(255, 255, 255, 0.5)',
+    fontSize: 10,
+    marginTop: 4,
+    fontStyle: 'italic',
   },
   timestamp: {
     color: 'rgba(255, 255, 255, 0.6)',
