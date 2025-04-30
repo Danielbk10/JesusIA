@@ -14,12 +14,14 @@ import LoginScreen from './components/LoginScreen';
 import SideMenu from './components/SideMenu';
 import BottomBar from './components/BottomBar';
 import BackgroundImage from './components/BackgroundImage';
+import QRCodeScreen from './components/QRCodeScreen';
 
 export default function App() {
   const [plansModalVisible, setPlansModalVisible] = useState(false);
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const [sideMenuVisible, setSideMenuVisible] = useState(false);
+  const [qrCodeModalVisible, setQRCodeModalVisible] = useState(false);
   const slideAnim = useRef(new Animated.Value(-300)).current;
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentChat, setCurrentChat] = useState(null);
@@ -106,7 +108,8 @@ export default function App() {
                 />
                 
                 <BottomBar 
-                  onOpenPlans={() => setPlansModalVisible(true)} 
+                  onOpenPlans={() => setPlansModalVisible(true)}
+                  onOpenQRCode={() => setQRCodeModalVisible(true)} 
                 />
                 
                 {/* Modal de planos de assinatura */}
@@ -170,6 +173,18 @@ export default function App() {
                 >
                   <MenuDrawer 
                     onClose={() => setMenuVisible(false)}
+                  />
+                </Modal>
+                
+                {/* Modal para QR Code */}
+                <Modal
+                  animationType="slide"
+                  transparent={false}
+                  visible={qrCodeModalVisible}
+                  onRequestClose={() => setQRCodeModalVisible(false)}
+                >
+                  <QRCodeScreen 
+                    onClose={() => setQRCodeModalVisible(false)} 
                   />
                 </Modal>
                 

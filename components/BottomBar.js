@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useCredits } from '../context/CreditsContext';
 import { COLORS } from '../config/colorConfig';
 import { FONTS } from '../config/fontConfig';
 
-export default function BottomBar({ onOpenPlans }) {
+export default function BottomBar({ onOpenPlans, onOpenQRCode }) {
   const { credits, plan } = useCredits();
   
   return (
@@ -16,12 +17,21 @@ export default function BottomBar({ onOpenPlans }) {
         </Text>
       </View>
       
-      <TouchableOpacity 
-        style={styles.plansButton}
-        onPress={onOpenPlans}
-      >
-        <Text style={styles.plansButtonText}>Ver Planos</Text>
-      </TouchableOpacity>
+      <View style={styles.buttonsContainer}>
+        <TouchableOpacity 
+          style={styles.qrButton}
+          onPress={onOpenQRCode}
+        >
+          <Ionicons name="qr-code" size={16} color="#fff" />
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.plansButton}
+          onPress={onOpenPlans}
+        >
+          <Text style={styles.plansButtonText}>Ver Planos</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -51,6 +61,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     fontFamily: FONTS.SERIF,
+  },
+  buttonsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  qrButton: {
+    backgroundColor: 'rgba(117, 100, 49, 0.6)',
+    padding: 8,
+    borderRadius: 16,
+    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   plansButton: {
     backgroundColor: COLORS.PRIMARY,
