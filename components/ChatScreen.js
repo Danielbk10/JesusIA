@@ -18,9 +18,11 @@ import {
 import { SendIcon } from './Icon';
 import AudioButton from './AudioButton';
 import ShareCard from './ShareCard';
+import SpeechToggleButton from './SpeechToggleButton';
 import { useCredits } from '../context/CreditsContext';
 import { useUser } from '../context/UserContext';
 import { useDevotionals } from '../context/DevotionalsContext';
+import { useSpeech } from '../context/SpeechContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getChatResponse } from '../services/apiService';
 import { FONTS } from '../config/fontConfig';
@@ -35,6 +37,7 @@ export default function ChatScreen({ currentChat }) {
   const { useCredit, credits, plan } = useCredits();
   const { user } = useUser();
   const { saveDevotional } = useDevotionals();
+  const { speak, isSpeechEnabled } = useSpeech();
   const flatListRef = useRef(null);
 
   // Carregar mensagens do armazenamento local ou do chat selecionado
@@ -324,25 +327,31 @@ export default function ChatScreen({ currentChat }) {
       )}
 
       <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Digite sua mensagem..."
-          placeholderTextColor="#999"
-          value={message}
-          onChangeText={setMessage}
-          multiline
-        />
+        <View style={styles.topInputRow}>
+          <SpeechToggleButton />
+        </View>
+        
+        <View style={styles.bottomInputRow}>
+          <TextInput
+            style={styles.input}
+            placeholder="Digite sua mensagem..."
+            placeholderTextColor="#999"
+            value={message}
+            onChangeText={setMessage}
+            multiline
+          />
 
-        {message.trim() ? (
-          <TouchableOpacity
-            style={styles.sendButton}
-            onPress={() => sendMessage()}
-          >
-            <SendIcon size={24} color="#fff" />
-          </TouchableOpacity>
-        ) : (
-          <AudioButton onSendAudio={handleAudioMessage} />
-        )}
+          {message.trim() ? (
+            <TouchableOpacity
+              style={styles.sendButton}
+              onPress={() => sendMessage()}
+            >
+              <SendIcon size={24} color="#fff" />
+            </TouchableOpacity>
+          ) : (
+            <AudioButton onSendAudio={handleAudioMessage} />
+          )}
+        </View>
       </View>
       
       {showShareCard && (
@@ -420,16 +429,24 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
     padding: 8,
     backgroundColor: 'rgba(0, 0, 0, 0.2)',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderTopWidth: 1,
     borderTopColor: `rgba(184, 157, 76, 0.8)`,
     borderBottomWidth: 1,
     borderBottomColor: `rgba(184, 157, 76, 0.8)`,
+  },
+  topInputRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 4,
+  },
+  bottomInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   input: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',

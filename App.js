@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { UserProvider } from './context/UserContext';
 import { CreditsProvider } from './context/CreditsContext';
 import { DevotionalsProvider } from './context/DevotionalsContext';
+import { SpeechProvider } from './context/SpeechContext';
 import ChatScreen from './components/ChatScreen';
 import SubscriptionPlans from './components/SubscriptionPlans';
 import Header from './components/Header';
@@ -83,6 +84,7 @@ export default function App() {
     <UserProvider>
       <CreditsProvider>
         <DevotionalsProvider>
+          <SpeechProvider>
         <View style={styles.container}>
           <View style={styles.statusBarSpace} />
           <StatusBar style="light" />
@@ -220,6 +222,7 @@ export default function App() {
             </>
           )}
         </View>
+          </SpeechProvider>
         </DevotionalsProvider>
       </CreditsProvider>
     </UserProvider>
