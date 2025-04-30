@@ -380,9 +380,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: COLORS.PRIMARY,
+    borderTopColor: `rgba(117, 100, 49, 0.7)`,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.PRIMARY,
+    borderBottomColor: `rgba(117, 100, 49, 0.7)`,
   },
   input: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
