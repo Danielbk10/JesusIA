@@ -67,6 +67,7 @@ export const CreditsProvider = ({ children }) => {
   const [credits, setCredits] = useState(5); // Padrão: 5 créditos
   const [plan, setPlan] = useState(SUBSCRIPTION_PLANS.FREE); // Padrão: plano gratuito
   const [subscriptionEndDate, setSubscriptionEndDate] = useState(null);
+  const [billingCycle, setBillingCycle] = useState('monthly'); // 'monthly' ou 'annual'
   const [loading, setLoading] = useState(true);
 
   // Carregar créditos e plano do armazenamento local
@@ -80,6 +81,7 @@ export const CreditsProvider = ({ children }) => {
       const storedCredits = await AsyncStorage.getItem('credits');
       const storedPlan = await AsyncStorage.getItem('plan');
       const storedEndDate = await AsyncStorage.getItem('subscriptionEndDate');
+      const storedBillingCycle = await AsyncStorage.getItem('billingCycle');
 
       // Garantir que o usuário sempre tenha pelo menos 5 créditos
       if (storedCredits !== null) {
@@ -116,7 +118,13 @@ export const CreditsProvider = ({ children }) => {
           await AsyncStorage.setItem('plan', SUBSCRIPTION_PLANS.FREE);
           await AsyncStorage.setItem('credits', PLANS_INFO[SUBSCRIPTION_PLANS.FREE].credits.toString());
           await AsyncStorage.removeItem('subscriptionEndDate');
+          await AsyncStorage.removeItem('billingCycle');
         }
+      }
+      
+      // Carregar o ciclo de cobrança
+      if (storedBillingCycle !== null) {
+        setBillingCycle(storedBillingCycle);
       }
     } catch (error) {
       console.error('Erro ao carregar créditos:', error);
@@ -137,10 +145,14 @@ export const CreditsProvider = ({ children }) => {
     }
   };
 
-  const updatePlan = async (newPlan, endDate = null) => {
+  const updatePlan = async (newPlan, endDate = null, cycle = 'monthly') => {
     try {
       await AsyncStorage.setItem('plan', newPlan);
       setPlan(newPlan);
+
+      // Atualizar o ciclo de cobrança
+      await AsyncStorage.setItem('billingCycle', cycle);
+      setBillingCycle(cycle);
 
       // Se for um plano pago, definir os créditos conforme o plano
       if (newPlan !== SUBSCRIPTION_PLANS.FREE) {
@@ -149,6 +161,11 @@ export const CreditsProvider = ({ children }) => {
         
         // Salvar a data de término da assinatura
         if (endDate) {
+          // Se for plano anual, adicionar 12 meses em vez de 1
+          if (cycle === 'annual') {
+            endDate.setMonth(endDate.getMonth() + 12);
+          }
+          
           await AsyncStorage.setItem('subscriptionEndDate', endDate.toISOString());
           setSubscriptionEndDate(endDate);
         }
@@ -199,6 +216,7 @@ export const CreditsProvider = ({ children }) => {
         credits,
         plan,
         subscriptionEndDate,
+        billingCycle,
         loading,
         useCredit,
         earnCreditsFromAd,
