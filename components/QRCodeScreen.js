@@ -8,7 +8,9 @@ import {
   TextInput,
   ScrollView,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Switch,
+  Clipboard
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { COLORS } from '../config/colorConfig';
@@ -21,23 +23,44 @@ const QRCodeScreen = ({ onClose }) => {
   const [qrSize, setQrSize] = useState(250);
   const [isGenerating, setIsGenerating] = useState(false);
   const [customMessage, setCustomMessage] = useState('');
+  const [useExpoLink, setUseExpoLink] = useState(true);
+  const [expoProjectId, setExpoProjectId] = useState('');
   
   // Gerar URL padrão com informações do usuário
   useEffect(() => {
     generateDefaultQRValue();
-  }, [user]);
+  }, [user, useExpoLink, expoProjectId]);
   
   const generateDefaultQRValue = () => {
-    // URL base para download do app
-    const baseUrl = 'https://transmutebr.com/jesusia';
+    let url;
     
-    // Adicionar parâmetros de referência se o usuário estiver logado
-    if (user && user.email) {
-      const referralCode = user.email.split('@')[0]; // Usar parte do email como código de referência
-      setQrValue(`${baseUrl}?ref=${referralCode}`);
+    if (useExpoLink) {
+      // URL para acessar o app via Expo Go
+      if (expoProjectId) {
+        // Usar o Project ID fornecido
+        url = `exp://exp.host/@transmutebr/JesusIA?release-channel=default&projectId=${expoProjectId}`;
+      } else {
+        // URL genérico do Expo Go
+        url = 'exp://exp.host/@transmutebr/JesusIA';
+      }
+      
+      // Adicionar parâmetros de referência se o usuário estiver logado
+      if (user && user.email) {
+        const referralCode = user.email.split('@')[0]; // Usar parte do email como código de referência
+        url += `&ref=${referralCode}`;
+      }
     } else {
-      setQrValue(baseUrl);
+      // URL base para download do app
+      url = 'https://transmutebr.com/jesusia';
+      
+      // Adicionar parâmetros de referência se o usuário estiver logado
+      if (user && user.email) {
+        const referralCode = user.email.split('@')[0]; // Usar parte do email como código de referência
+        url += `?ref=${referralCode}`;
+      }
     }
+    
+    setQrValue(url);
   };
   
   const generateCustomQRValue = () => {
@@ -50,16 +73,38 @@ const QRCodeScreen = ({ onClose }) => {
     
     // Simular processamento
     setTimeout(() => {
-      // URL base para download do app
-      const baseUrl = 'https://transmutebr.com/jesusia';
+      let url;
       
-      // Adicionar parâmetros de mensagem e referência
-      let url = `${baseUrl}?msg=${encodeURIComponent(customMessage)}`;
-      
-      // Adicionar parâmetro de referência se o usuário estiver logado
-      if (user && user.email) {
-        const referralCode = user.email.split('@')[0];
-        url += `&ref=${referralCode}`;
+      if (useExpoLink) {
+        // URL para acessar o app via Expo Go
+        if (expoProjectId) {
+          // Usar o Project ID fornecido
+          url = `exp://exp.host/@transmutebr/JesusIA?release-channel=default&projectId=${expoProjectId}`;
+        } else {
+          // URL genérico do Expo Go
+          url = 'exp://exp.host/@transmutebr/JesusIA';
+        }
+        
+        // Adicionar parâmetros de mensagem
+        url += `&msg=${encodeURIComponent(customMessage)}`;
+        
+        // Adicionar parâmetro de referência se o usuário estiver logado
+        if (user && user.email) {
+          const referralCode = user.email.split('@')[0];
+          url += `&ref=${referralCode}`;
+        }
+      } else {
+        // URL base para download do app
+        url = 'https://transmutebr.com/jesusia';
+        
+        // Adicionar parâmetros de mensagem
+        url += `?msg=${encodeURIComponent(customMessage)}`;
+        
+        // Adicionar parâmetro de referência se o usuário estiver logado
+        if (user && user.email) {
+          const referralCode = user.email.split('@')[0];
+          url += `&ref=${referralCode}`;
+        }
       }
       
       setQrValue(url);
@@ -71,13 +116,20 @@ const QRCodeScreen = ({ onClose }) => {
     try {
       const shareOptions = {
         title: 'Compartilhar QR Code do Jesus.IA',
-        message: `Escaneie este QR code para acessar o Jesus.IA: ${qrValue}\n\nBaixe o app: https://transmutebr.com/jesusia\nSiga @transmutebr no TikTok`,
+        message: useExpoLink
+          ? `Escaneie este QR code para acessar o Jesus.IA via Expo Go: ${qrValue}\n\nBaixe o Expo Go: https://expo.dev/client\nSiga @transmutebr no TikTok`
+          : `Escaneie este QR code para acessar o Jesus.IA: ${qrValue}\n\nBaixe o app: https://transmutebr.com/jesusia\nSiga @transmutebr no TikTok`,
       };
       
       await Share.share(shareOptions);
     } catch (error) {
       console.error('Erro ao compartilhar QR code:', error);
     }
+  };
+  
+  const copyToClipboard = () => {
+    Clipboard.setString(qrValue);
+    Alert.alert('Link copiado', 'O link do QR code foi copiado para a área de transferência.');
   };
   
   return (
@@ -93,6 +145,30 @@ const QRCodeScreen = ({ onClose }) => {
       </View>
       
       <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.toggleContainer}>
+          <Text style={styles.toggleLabel}>QR Code para Expo Go</Text>
+          <Switch
+            trackColor={{ false: '#767577', true: COLORS.PRIMARY }}
+            thumbColor={useExpoLink ? '#f5dd4b' : '#f4f3f4'}
+            ios_backgroundColor="#3e3e3e"
+            onValueChange={() => setUseExpoLink(!useExpoLink)}
+            value={useExpoLink}
+          />
+        </View>
+        
+        {useExpoLink && (
+          <View style={styles.expoIdContainer}>
+            <Text style={styles.expoIdLabel}>ID do Projeto no Expo (opcional):</Text>
+            <TextInput
+              style={styles.expoIdInput}
+              placeholder="Digite o ID do projeto..."
+              placeholderTextColor="#999"
+              value={expoProjectId}
+              onChangeText={setExpoProjectId}
+            />
+          </View>
+        )}
+        
         <View style={styles.qrContainer}>
           {isGenerating ? (
             <ActivityIndicator size="large" color={COLORS.PRIMARY} />
@@ -111,7 +187,12 @@ const QRCodeScreen = ({ onClose }) => {
           )}
         </View>
         
-        <Text style={styles.urlText}>{qrValue}</Text>
+        <View style={styles.urlContainer}>
+          <Text style={styles.urlText}>{qrValue}</Text>
+          <TouchableOpacity onPress={copyToClipboard} style={styles.copyButton}>
+            <Text style={styles.copyButtonText}>Copiar</Text>
+          </TouchableOpacity>
+        </View>
         
         <View style={styles.customMessageContainer}>
           <Text style={styles.sectionTitle}>Personalizar QR Code</Text>
@@ -134,7 +215,9 @@ const QRCodeScreen = ({ onClose }) => {
         
         <View style={styles.infoContainer}>
           <Text style={styles.infoText}>
-            Este QR code permite acesso rápido ao Jesus.IA. Compartilhe com amigos e familiares para que eles também possam acessar o aplicativo.
+            {useExpoLink 
+              ? 'Este QR code permite acesso rápido ao Jesus.IA através do Expo Go. O usuário precisará ter o Expo Go instalado para acessar o aplicativo.' 
+              : 'Este QR code permite acesso rápido ao Jesus.IA. Compartilhe com amigos e familiares para que eles também possam acessar o aplicativo.'}
           </Text>
         </View>
         
@@ -201,12 +284,65 @@ const styles = StyleSheet.create({
     height: 290,
     width: 290,
   },
-  urlText: {
+  toggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+    width: '100%',
+  },
+  toggleLabel: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: FONTS.SERIF,
+  },
+  expoIdContainer: {
+    width: '100%',
+    marginBottom: 15,
+  },
+  expoIdLabel: {
     color: '#ccc',
     fontSize: 14,
+    marginBottom: 5,
+    fontFamily: FONTS.SERIF,
+  },
+  expoIdInput: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 8,
+    color: '#fff',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    fontFamily: FONTS.SERIF,
+    fontSize: 14,
+  },
+  urlContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 10,
     marginBottom: 20,
+    width: '100%',
+  },
+  urlText: {
+    color: '#ccc',
+    fontSize: 12,
+    flex: 1,
     textAlign: 'center',
+  },
+  copyButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 4,
+    marginLeft: 8,
+  },
+  copyButtonText: {
+    color: '#fff',
+    fontSize: 12,
   },
   customMessageContainer: {
     width: '100%',
