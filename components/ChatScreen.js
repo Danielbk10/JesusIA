@@ -170,6 +170,11 @@ export default function ChatScreen({ currentChat }) {
       const finalMessages = [...updatedMessages, aiMessage];
       setMessages(finalMessages);
       
+      // Narrar a resposta se a narração estiver ativada
+      if (isSpeechEnabled) {
+        speak(response);
+      }
+      
       // Salvar a conversa no armazenamento local
       const chatId = currentChat ? currentChat.id : 'current_chat';
       await AsyncStorage.setItem(`chat_${chatId}`, JSON.stringify(finalMessages));
