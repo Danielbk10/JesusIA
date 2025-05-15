@@ -188,6 +188,8 @@ export default function App() {
                   />
                 </Modal>
                 
+
+                
                 {/* Modal para visualizar devocional */}
                 <Modal
                   animationType="slide"
