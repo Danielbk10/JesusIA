@@ -362,11 +362,7 @@ export default function ChatScreen({ currentChat }) {
   };
 
   return (
-    <ImageBackground
-      source={require('../assets/images/tree_background.png')}
-      style={styles.container}
-      imageStyle={styles.backgroundImageStyle}
-    >
+    <View style={styles.container}>
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -424,7 +420,7 @@ export default function ChatScreen({ currentChat }) {
         />
       )}
       </KeyboardAvoidingView>
-    </ImageBackground>
+    </View>
   );
 }
 
@@ -432,9 +428,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 10,
-  },
-  backgroundImageStyle: {
-    opacity: 0.1,
+    backgroundColor: '#000', // Fundo preto para manter a aparência consistente
   },
   keyboardAvoidingView: {
     flex: 1,
