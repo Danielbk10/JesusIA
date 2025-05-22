@@ -109,7 +109,6 @@ export default function App() {
                 
                 <BottomBar 
                   onOpenPlans={() => setPlansModalVisible(true)}
-                  onOpenQRCode={() => setQRCodeModalVisible(true)} 
                 />
                 
                 {/* Modal de planos de assinatura */}

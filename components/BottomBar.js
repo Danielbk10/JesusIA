@@ -5,7 +5,7 @@ import { useCredits } from '../context/CreditsContext';
 import { COLORS } from '../config/colorConfig';
 import { FONTS } from '../config/fontConfig';
 
-export default function BottomBar({ onOpenPlans, onOpenQRCode }) {
+export default function BottomBar({ onOpenPlans }) {
   const { credits, plan } = useCredits();
   
   return (
@@ -18,13 +18,6 @@ export default function BottomBar({ onOpenPlans, onOpenQRCode }) {
       </View>
       
       <View style={styles.buttonsContainer}>
-        <TouchableOpacity 
-          style={styles.qrButton}
-          onPress={onOpenQRCode}
-        >
-          <Ionicons name="qr-code" size={16} color="#fff" />
-        </TouchableOpacity>
-        
         <TouchableOpacity 
           style={styles.plansButton}
           onPress={onOpenPlans}
@@ -66,14 +59,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  qrButton: {
-    backgroundColor: 'rgba(117, 100, 49, 0.6)',
-    padding: 8,
-    borderRadius: 16,
-    marginRight: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+
   plansButton: {
     backgroundColor: COLORS.PRIMARY,
     paddingHorizontal: 12,
