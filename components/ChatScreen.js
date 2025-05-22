@@ -448,9 +448,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderTopWidth: 1,
-    borderTopColor: `rgba(184, 157, 76, 0.8)`,
+    borderTopColor: `rgba(184, 157, 76, 0.3)`,
     borderBottomWidth: 1,
-    borderBottomColor: `rgba(184, 157, 76, 0.8)`,
+    borderBottomColor: `rgba(184, 157, 76, 0.3)`,
   },
   topInputRow: {
     flexDirection: 'row',
