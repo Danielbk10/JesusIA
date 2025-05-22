@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
   },
   speechToggleContainer: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
     paddingHorizontal: 16,
     paddingVertical: 8,
     backgroundColor: 'transparent',
