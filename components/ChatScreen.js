@@ -13,7 +13,8 @@ import {
   Alert, 
   ScrollView, 
   Image,
-  Pressable
+  Pressable,
+  AppState
 } from 'react-native';
 import { SendIcon } from './Icon';
 import AudioButton from './AudioButton';
@@ -27,6 +28,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getChatResponse } from '../services/apiService';
 import { FONTS } from '../config/fontConfig';
 import { COLORS } from '../config/colorConfig';
+import { shouldStartNewChat, closeSession, startNewChat } from '../utils/chatSessionUtils';
 
 export default function ChatScreen({ currentChat }) {
   const [message, setMessage] = useState('');
@@ -39,13 +41,43 @@ export default function ChatScreen({ currentChat }) {
   const { saveDevotional } = useDevotionals();
   const { speak, isSpeechEnabled } = useSpeech();
   const flatListRef = useRef(null);
+  const appState = useRef(AppState.currentState);
+  
+  // Monitorar mudanças no estado do aplicativo (ativo/inativo/background)
+  useEffect(() => {
+    // Registrar a data de último acesso ao iniciar
+    const registerLastAccess = async () => {
+      await AsyncStorage.setItem('last_access_date', new Date().toDateString());
+    };
+    registerLastAccess();
+    
+    // Configurar listener para mudanças no estado do aplicativo
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      // Quando o app vai para background ou é fechado
+      if (appState.current.match(/active/) && nextAppState.match(/inactive|background/)) {
+        console.log('App passou para background ou foi fechado');
+        closeSession(); // Marcar a sessão como fechada
+      }
+      
+      // Quando o app volta a ficar ativo
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        console.log('App voltou a ficar ativo');
+      }
+      
+      appState.current = nextAppState;
+    });
+    
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   // Carregar mensagens do armazenamento local ou do chat selecionado
   useEffect(() => {
     const loadMessages = async () => {
       try {
+        // Se um chat foi selecionado do histórico, carregamos suas mensagens
         if (currentChat) {
-          // Se um chat foi selecionado do histórico, carregamos suas mensagens
           const chatId = currentChat.id;
           const storedMessages = await AsyncStorage.getItem(`chat_${chatId}`);
           
@@ -74,28 +106,52 @@ export default function ChatScreen({ currentChat }) {
               },
             ]);
           }
-        } else {
-          // Se nenhum chat foi selecionado, verificamos se há um chat atual salvo
-          const currentChatId = await AsyncStorage.getItem('current_chat_id');
-          
-          if (currentChatId) {
-            const storedMessages = await AsyncStorage.getItem(`chat_${currentChatId}`);
-            if (storedMessages) {
-              setMessages(JSON.parse(storedMessages));
-              return;
-            }
-          }
-          
-          // Se não houver chat atual, mostramos a mensagem inicial
-          setMessages([
-            {
-              id: '1',
-              text: 'Olá! Eu sou Jesus.IA, um assistente baseado na Bíblia. Como posso ajudar você hoje?',
-              sender: 'ai',
-              timestamp: new Date(),
-            },
-          ]);
+          return; // Sair da função se um chat foi selecionado do histórico
         }
+        
+        // Verificar se devemos iniciar um novo chat
+        const shouldStart = await shouldStartNewChat();
+        
+        if (shouldStart) {
+          // Iniciar um novo chat
+          console.log('Iniciando um novo chat');
+          const initialMessage = await startNewChat();
+          if (initialMessage) {
+            setMessages([initialMessage]);
+          } else {
+            // Fallback se houver erro
+            setMessages([
+              {
+                id: Date.now().toString(),
+                text: 'Olá! Eu sou Jesus.IA, um assistente baseado na Bíblia. Como posso ajudar você hoje?',
+                sender: 'ai',
+                timestamp: new Date(),
+              },
+            ]);
+          }
+          return;
+        }
+        
+        // Se não precisamos iniciar um novo chat, verificamos se há um chat atual salvo
+        const currentChatId = await AsyncStorage.getItem('current_chat_id');
+        
+        if (currentChatId) {
+          const storedMessages = await AsyncStorage.getItem(`chat_${currentChatId}`);
+          if (storedMessages) {
+            setMessages(JSON.parse(storedMessages));
+            return;
+          }
+        }
+        
+        // Se não houver chat atual, mostramos a mensagem inicial
+        setMessages([
+          {
+            id: '1',
+            text: 'Olá! Eu sou Jesus.IA, um assistente baseado na Bíblia. Como posso ajudar você hoje?',
+            sender: 'ai',
+            timestamp: new Date(),
+          },
+        ]);
       } catch (error) {
         console.error('Erro ao carregar mensagens:', error);
         // Em caso de erro, exibimos pelo menos a mensagem inicial
