@@ -331,10 +331,11 @@ export default function ChatScreen({ currentChat }) {
         </View>
       )}
 
+      <View style={styles.speechToggleContainer}>
+        <SpeechToggleButton />
+      </View>
+
       <View style={styles.inputContainer}>
-        <View style={styles.topInputRow}>
-          <SpeechToggleButton />
-        </View>
         
         <View style={styles.bottomInputRow}>
           <TextInput
@@ -432,6 +433,13 @@ const styles = StyleSheet.create({
   loadingText: {
     color: COLORS.TEXT_MUTED,
     marginLeft: 8,
+  },
+  speechToggleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'transparent',
   },
   inputContainer: {
     flexDirection: 'column',
