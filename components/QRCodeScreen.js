@@ -25,6 +25,7 @@ const QRCodeScreen = ({ onClose }) => {
   const [customMessage, setCustomMessage] = useState('');
   const [useExpoLink, setUseExpoLink] = useState(true);
   const [expoProjectId, setExpoProjectId] = useState('');
+  const [lastUpdated, setLastUpdated] = useState(new Date().toLocaleString());
   
   // Gerar URL padrão com informações do usuário
   useEffect(() => {
@@ -34,14 +35,18 @@ const QRCodeScreen = ({ onClose }) => {
   const generateDefaultQRValue = () => {
     let url;
     
+    // Adicionar timestamp para garantir que o QR code seja único a cada geração
+    const timestamp = new Date().getTime();
+    setLastUpdated(new Date().toLocaleString());
+    
     if (useExpoLink) {
       // URL para acessar o app via Expo Go
       if (expoProjectId) {
         // Usar o Project ID fornecido
-        url = `exp://exp.host/@transmutebr/JesusIA?release-channel=default&projectId=${expoProjectId}`;
+        url = `exp://exp.host/@transmutebr/JesusIA?release-channel=default&projectId=${expoProjectId}&ts=${timestamp}`;
       } else {
         // URL genérico do Expo Go
-        url = 'exp://exp.host/@transmutebr/JesusIA';
+        url = `exp://exp.host/@transmutebr/JesusIA?ts=${timestamp}`;
       }
       
       // Adicionar parâmetros de referência se o usuário estiver logado
@@ -51,12 +56,12 @@ const QRCodeScreen = ({ onClose }) => {
       }
     } else {
       // URL base para download do app
-      url = 'https://transmutebr.com/jesusia';
+      url = `https://transmutebr.com/jesusia?ts=${timestamp}`;
       
       // Adicionar parâmetros de referência se o usuário estiver logado
       if (user && user.email) {
         const referralCode = user.email.split('@')[0]; // Usar parte do email como código de referência
-        url += `?ref=${referralCode}`;
+        url += `&ref=${referralCode}`;
       }
     }
     
@@ -75,14 +80,18 @@ const QRCodeScreen = ({ onClose }) => {
     setTimeout(() => {
       let url;
       
+      // Adicionar timestamp para garantir que o QR code seja único a cada geração
+      const timestamp = new Date().getTime();
+      setLastUpdated(new Date().toLocaleString());
+      
       if (useExpoLink) {
         // URL para acessar o app via Expo Go
         if (expoProjectId) {
           // Usar o Project ID fornecido
-          url = `exp://exp.host/@transmutebr/JesusIA?release-channel=default&projectId=${expoProjectId}`;
+          url = `exp://exp.host/@transmutebr/JesusIA?release-channel=default&projectId=${expoProjectId}&ts=${timestamp}`;
         } else {
           // URL genérico do Expo Go
-          url = 'exp://exp.host/@transmutebr/JesusIA';
+          url = `exp://exp.host/@transmutebr/JesusIA?ts=${timestamp}`;
         }
         
         // Adicionar parâmetros de mensagem
@@ -95,10 +104,10 @@ const QRCodeScreen = ({ onClose }) => {
         }
       } else {
         // URL base para download do app
-        url = 'https://transmutebr.com/jesusia';
+        url = `https://transmutebr.com/jesusia?ts=${timestamp}`;
         
         // Adicionar parâmetros de mensagem
-        url += `?msg=${encodeURIComponent(customMessage)}`;
+        url += `&msg=${encodeURIComponent(customMessage)}`;
         
         // Adicionar parâmetro de referência se o usuário estiver logado
         if (user && user.email) {
@@ -170,21 +179,21 @@ const QRCodeScreen = ({ onClose }) => {
         )}
         
         <View style={styles.qrContainer}>
-          {isGenerating ? (
-            <ActivityIndicator size="large" color={COLORS.PRIMARY} />
-          ) : (
+          {qrValue ? (
             <QRCode
               value={qrValue}
               size={qrSize}
-              color="#000000"
-              backgroundColor="#ffffff"
-              logo={require('../assets/images/jesus-logo.png')}
-              logoSize={qrSize * 0.2}
-              logoBackgroundColor="white"
-              logoMargin={5}
-              logoBorderRadius={10}
+              color="#000"
+              backgroundColor="#fff"
             />
+          ) : (
+            <ActivityIndicator size="large" color={COLORS.PRIMARY} />
           )}
+        </View>
+        
+        <View style={styles.updateInfoContainer}>
+          <Text style={styles.updateInfoText}>QR Code atualizado para nova rede WiFi</Text>
+          <Text style={styles.updateTimeText}>Última atualização: {lastUpdated}</Text>
         </View>
         
         <View style={styles.urlContainer}>
@@ -413,6 +422,26 @@ const styles = StyleSheet.create({
   resetButtonText: {
     color: '#fff',
     fontSize: 16,
+    fontFamily: FONTS.SERIF,
+  },
+  updateInfoContainer: {
+    backgroundColor: 'rgba(184, 157, 76, 0.2)',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 15,
+    width: '100%',
+    alignItems: 'center',
+  },
+  updateInfoText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: FONTS.SERIF,
+    marginBottom: 4,
+  },
+  updateTimeText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
     fontFamily: FONTS.SERIF,
   },
 });
