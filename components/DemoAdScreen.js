@@ -58,7 +58,10 @@ export default function DemoAdScreen({ visible, onClose, onAdCompleted }) {
     if (adState === 'completed') {
       // Dar um pequeno atraso antes de chamar o callback
       const completionTimer = setTimeout(() => {
-        onAdCompleted && onAdCompleted();
+        console.log('Chamando callback onAdCompleted');
+        if (onAdCompleted) {
+          onAdCompleted();
+        }
       }, 1000);
       
       return () => clearTimeout(completionTimer);
@@ -112,7 +115,17 @@ export default function DemoAdScreen({ visible, onClose, onAdCompleted }) {
             <Text style={styles.completedText}>Você ganhou 2 créditos</Text>
             <TouchableOpacity 
               style={styles.closeButton}
-              onPress={onClose}
+              onPress={() => {
+                console.log('Botão Continuar pressionado');
+                // Primeiro chamar o callback de conclusão se ainda não foi chamado
+                if (onAdCompleted) {
+                  onAdCompleted();
+                }
+                // Depois fechar o modal
+                if (onClose) {
+                  onClose();
+                }
+              }}
             >
               <Text style={styles.closeButtonText}>Continuar</Text>
             </TouchableOpacity>

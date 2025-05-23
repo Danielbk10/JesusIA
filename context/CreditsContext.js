@@ -219,11 +219,8 @@ export const CreditsProvider = ({ children }) => {
       // Mostrar o anúncio de demonstração
       setAdVisible(true);
       AdService.showAd((success) => {
-        if (success) {
-          // Adicionar 2 créditos como recompensa pelo anúncio
-          const newCredits = credits + 2;
-          saveCredits(newCredits);
-        }
+        // Não adicionamos créditos aqui, pois isso é feito no handleAdCompleted
+        console.log('Anúncio exibido com sucesso:', success);
       });
       return true;
     } catch (error) {
@@ -240,7 +237,15 @@ export const CreditsProvider = ({ children }) => {
   
   // Função chamada quando o anúncio é concluído
   const handleAdCompleted = () => {
+    // Fechar o anúncio e notificar o serviço
+    setAdVisible(false);
     AdService.completeAd();
+    
+    // Adicionar 2 créditos como recompensa pelo anúncio
+    const newCredits = credits + 2;
+    saveCredits(newCredits);
+    
+    console.log('Anúncio concluído! Créditos adicionados:', newCredits);
   };
 
   return (
