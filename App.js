@@ -13,7 +13,7 @@ import MenuDrawer from './components/MenuDrawer';
 import LoginScreen from './components/LoginScreen';
 import SideMenu from './components/SideMenu';
 import BottomBar from './components/BottomBar';
-import BackgroundImage from './components/BackgroundImage';
+// BackgroundImage removido
 import QRCodeScreen from './components/QRCodeScreen';
 
 export default function App() {
@@ -97,7 +97,7 @@ export default function App() {
             <>
               {/* Banner removido */}
               
-              <BackgroundImage>
+              <View style={styles.mainContainer}>
                 <Header 
                   onPressProfile={() => setProfileModalVisible(true)} 
                   onPressMenu={() => setSideMenuVisible(true)}
@@ -234,7 +234,7 @@ export default function App() {
                     </View>
                   </View>
                 </Modal>
-              </BackgroundImage>
+              </View>
             </>
           )}
         </View>
@@ -249,6 +249,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  mainContainer: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: 'rgba(184, 157, 76, 0.3)',
   },
   statusBarSpace: {
     height: Platform.OS === 'ios' ? 50 : RNStatusBar.currentHeight + 10,
