@@ -30,7 +30,7 @@ import { FONTS } from '../config/fontConfig';
 import { COLORS } from '../config/colorConfig';
 import { shouldStartNewChat, closeSession, startNewChat } from '../utils/chatSessionUtils';
 
-export default function ChatScreen({ currentChat }) {
+export default function ChatScreen({ currentChat, onOpenPlans }) {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -183,7 +183,29 @@ export default function ChatScreen({ currentChat }) {
     if (credits <= 0 && plan === 'free') {
       Alert.alert(
         'Créditos Insuficientes',
-        'Você não tem créditos suficientes. Assista a um anúncio para ganhar mais créditos ou faça upgrade para um plano premium.'
+        'Você não tem créditos suficientes. Assista a um anúncio para ganhar mais créditos ou faça upgrade para um plano premium.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { 
+            text: 'Assistir Anúncio', 
+            onPress: async () => {
+              const success = await earnCreditsFromAd();
+              if (success) {
+                // Tentar enviar a mensagem novamente após ganhar créditos
+                sendMessage(text);
+              }
+            } 
+          },
+          { 
+            text: 'Ver Planos', 
+            onPress: () => {
+              // Abrir modal de planos
+              if (onOpenPlans) {
+                onOpenPlans();
+              }
+            } 
+          }
+        ]
       );
       return;
     }
@@ -193,7 +215,29 @@ export default function ChatScreen({ currentChat }) {
     if (!hasCredit) {
       Alert.alert(
         'Créditos Insuficientes',
-        'Você não tem créditos suficientes. Assista a um anúncio para ganhar mais créditos ou faça upgrade para um plano premium.'
+        'Você não tem créditos suficientes. Assista a um anúncio para ganhar mais créditos ou faça upgrade para um plano premium.',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { 
+            text: 'Assistir Anúncio', 
+            onPress: async () => {
+              const success = await earnCreditsFromAd();
+              if (success) {
+                // Tentar enviar a mensagem novamente após ganhar créditos
+                sendMessage(text);
+              }
+            } 
+          },
+          { 
+            text: 'Ver Planos', 
+            onPress: () => {
+              // Abrir modal de planos
+              if (onOpenPlans) {
+                onOpenPlans();
+              }
+            } 
+          }
+        ]
       );
       return;
     }

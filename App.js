@@ -105,6 +105,7 @@ export default function App() {
                 
                 <ChatScreen 
                   currentChat={currentChat}
+                  onOpenPlans={() => setPlansModalVisible(true)}
                 />
                 
                 <BottomBar 
