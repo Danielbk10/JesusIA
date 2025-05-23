@@ -254,6 +254,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 1,
     borderColor: 'rgba(184, 157, 76, 0.3)',
+    margin: 5,
   },
   statusBarSpace: {
     height: Platform.OS === 'ios' ? 50 : RNStatusBar.currentHeight + 10,
