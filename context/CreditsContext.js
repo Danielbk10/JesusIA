@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DemoAdScreen from '../components/DemoAdScreen';
 
 // Definição dos planos de assinatura
 export const SUBSCRIPTION_PLANS = {
@@ -47,16 +48,36 @@ export const PLANS_INFO = {
 
 // Classe de serviço para gerenciar anúncios
 class AdService {
+  static _adVisible = false;
+  static _adCallback = null;
+  
+  static showAd(callback) {
+    // Armazenar o callback para ser chamado quando o anúncio for concluído
+    this._adCallback = callback;
+    this._adVisible = true;
+  }
+  
+  static hideAd() {
+    this._adVisible = false;
+  }
+  
+  static completeAd() {
+    this._adVisible = false;
+    if (this._adCallback) {
+      this._adCallback(true);
+      this._adCallback = null;
+    }
+  }
+  
+  static isAdVisible() {
+    return this._adVisible;
+  }
+  
   static async showRewardedAd() {
-    return new Promise(async (resolve) => {
-      // Simulação de exibição de anúncio
-      console.log('Exibindo anúncio recompensado...');
-      
-      // Simulação de um atraso para representar o tempo de exibição do anúncio
-      setTimeout(() => {
-        console.log('Anúncio concluído!');
-        resolve(true); // Anúncio exibido com sucesso
-      }, 2000);
+    return new Promise((resolve) => {
+      this.showAd((success) => {
+        resolve(success);
+      });
     });
   }
 }
@@ -69,6 +90,7 @@ export const CreditsProvider = ({ children }) => {
   const [subscriptionEndDate, setSubscriptionEndDate] = useState(null);
   const [billingCycle, setBillingCycle] = useState('monthly'); // 'monthly' ou 'annual'
   const [loading, setLoading] = useState(true);
+  const [adVisible, setAdVisible] = useState(false);
 
   // Carregar créditos e plano do armazenamento local
   useEffect(() => {
@@ -194,20 +216,31 @@ export const CreditsProvider = ({ children }) => {
 
   const earnCreditsFromAd = async () => {
     try {
-      const adResult = await AdService.showRewardedAd();
-      
-      if (adResult) {
-        // Adicionar 2 créditos como recompensa pelo anúncio
-        const newCredits = credits + 2;
-        await saveCredits(newCredits);
-        return true;
-      }
-      
-      return false;
+      // Mostrar o anúncio de demonstração
+      setAdVisible(true);
+      AdService.showAd((success) => {
+        if (success) {
+          // Adicionar 2 créditos como recompensa pelo anúncio
+          const newCredits = credits + 2;
+          saveCredits(newCredits);
+        }
+      });
+      return true;
     } catch (error) {
       console.error('Erro ao exibir anúncio:', error);
       return false;
     }
+  };
+  
+  // Função para fechar o anúncio
+  const handleCloseAd = () => {
+    setAdVisible(false);
+    AdService.hideAd();
+  };
+  
+  // Função chamada quando o anúncio é concluído
+  const handleAdCompleted = () => {
+    AdService.completeAd();
   };
 
   return (
@@ -226,6 +259,13 @@ export const CreditsProvider = ({ children }) => {
       }}
     >
       {children}
+      
+      {/* Componente de anúncio de demonstração */}
+      <DemoAdScreen
+        visible={adVisible}
+        onClose={handleCloseAd}
+        onAdCompleted={handleAdCompleted}
+      />
     </CreditsContext.Provider>
   );
 };
