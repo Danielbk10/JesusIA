@@ -17,23 +17,32 @@ export default function DemoAdScreen({ visible, onClose, onAdCompleted }) {
   
   // Simular carregamento do anúncio
   useEffect(() => {
+    console.log('DemoAdScreen: visible =', visible, 'adState =', adState);
     if (visible && adState === 'loading') {
+      console.log('DemoAdScreen: Iniciando carregamento do anúncio');
       // Simular tempo de carregamento
       const loadTimer = setTimeout(() => {
+        console.log('DemoAdScreen: Anúncio carregado, iniciando exibição');
         setAdState('playing');
         // Iniciar contagem regressiva
         startCountdown();
       }, 1500);
       
-      return () => clearTimeout(loadTimer);
+      return () => {
+        console.log('DemoAdScreen: Limpando timer de carregamento');
+        clearTimeout(loadTimer);
+      };
     }
   }, [visible, adState]);
   
   // Função para iniciar a contagem regressiva
   const startCountdown = () => {
+    console.log('DemoAdScreen: Iniciando contagem regressiva de', countdown, 'segundos');
     const timer = setInterval(() => {
       setCountdown((prev) => {
+        console.log('DemoAdScreen: Contagem regressiva:', prev - 1);
         if (prev <= 1) {
+          console.log('DemoAdScreen: Contagem regressiva concluída, marcando anúncio como completo');
           clearInterval(timer);
           setAdState('completed');
           return 0;
@@ -42,12 +51,17 @@ export default function DemoAdScreen({ visible, onClose, onAdCompleted }) {
       });
     }, 1000);
     
-    return () => clearInterval(timer);
+    return () => {
+      console.log('DemoAdScreen: Limpando timer de contagem regressiva');
+      clearInterval(timer);
+    };
   };
   
   // Resetar estado quando o modal é fechado
   useEffect(() => {
+    console.log('DemoAdScreen: Visibilidade mudou para', visible ? 'visível' : 'invisível');
     if (!visible) {
+      console.log('DemoAdScreen: Resetando estado do anúncio');
       setCountdown(5);
       setAdState('loading');
     }
@@ -56,15 +70,26 @@ export default function DemoAdScreen({ visible, onClose, onAdCompleted }) {
   // Chamar callback quando o anúncio for concluído
   useEffect(() => {
     if (adState === 'completed') {
+      console.log('DemoAdScreen: Anúncio marcado como concluído, preparando callback');
       // Dar um pequeno atraso antes de chamar o callback
       const completionTimer = setTimeout(() => {
-        console.log('Chamando callback onAdCompleted');
+        console.log('DemoAdScreen: Chamando callback onAdCompleted');
         if (onAdCompleted) {
-          onAdCompleted();
+          try {
+            onAdCompleted();
+            console.log('DemoAdScreen: Callback onAdCompleted executado com sucesso');
+          } catch (error) {
+            console.error('DemoAdScreen: Erro ao executar callback onAdCompleted:', error);
+          }
+        } else {
+          console.warn('DemoAdScreen: Callback onAdCompleted não fornecido');
         }
       }, 1000);
       
-      return () => clearTimeout(completionTimer);
+      return () => {
+        console.log('DemoAdScreen: Limpando timer de conclusão');
+        clearTimeout(completionTimer);
+      };
     }
   }, [adState, onAdCompleted]);
   
@@ -116,14 +141,23 @@ export default function DemoAdScreen({ visible, onClose, onAdCompleted }) {
             <TouchableOpacity 
               style={styles.closeButton}
               onPress={() => {
-                console.log('Botão Continuar pressionado');
+                console.log('DemoAdScreen: Botão Continuar pressionado');
                 // Primeiro chamar o callback de conclusão se ainda não foi chamado
                 if (onAdCompleted) {
-                  onAdCompleted();
+                  try {
+                    console.log('DemoAdScreen: Executando callback de conclusão do botão Continuar');
+                    onAdCompleted();
+                    console.log('DemoAdScreen: Callback de conclusão executado com sucesso');
+                  } catch (error) {
+                    console.error('DemoAdScreen: Erro ao executar callback de conclusão:', error);
+                  }
                 }
                 // Depois fechar o modal
                 if (onClose) {
+                  console.log('DemoAdScreen: Fechando modal');
                   onClose();
+                } else {
+                  console.warn('DemoAdScreen: Callback onClose não fornecido');
                 }
               }}
             >

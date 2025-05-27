@@ -52,20 +52,35 @@ class AdService {
   static _adCallback = null;
   
   static showAd(callback) {
+    console.log('AdService: showAd chamado');
     // Armazenar o callback para ser chamado quando o anúncio for concluído
     this._adCallback = callback;
     this._adVisible = true;
+    console.log('AdService: Estado do anúncio definido como visível');
   }
   
   static hideAd() {
+    console.log('AdService: hideAd chamado');
     this._adVisible = false;
+    console.log('AdService: Estado do anúncio definido como invisível');
   }
   
   static completeAd() {
+    console.log('AdService: completeAd chamado');
     this._adVisible = false;
+    console.log('AdService: Estado do anúncio definido como invisível');
+    
     if (this._adCallback) {
-      this._adCallback(true);
+      console.log('AdService: Executando callback do anúncio');
+      try {
+        this._adCallback(true);
+        console.log('AdService: Callback executado com sucesso');
+      } catch (error) {
+        console.error('AdService: Erro ao executar callback:', error);
+      }
       this._adCallback = null;
+    } else {
+      console.warn('AdService: Nenhum callback registrado para o anúncio');
     }
   }
   
@@ -74,8 +89,10 @@ class AdService {
   }
   
   static async showRewardedAd() {
+    console.log('AdService: showRewardedAd chamado');
     return new Promise((resolve) => {
       this.showAd((success) => {
+        console.log('AdService: Resolvendo promessa de showRewardedAd com:', success);
         resolve(success);
       });
     });
@@ -216,36 +233,68 @@ export const CreditsProvider = ({ children }) => {
 
   const earnCreditsFromAd = async () => {
     try {
+      console.log('CreditsContext: Iniciando exibição do anúncio');
+      // Garantir que o estado do anúncio esteja limpo antes de exibi-lo
+      AdService.hideAd();
+      
+      // Pequeno atraso para garantir que o estado anterior seja limpo
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       // Mostrar o anúncio de demonstração
+      console.log('CreditsContext: Definindo adVisible como true');
       setAdVisible(true);
+      
       AdService.showAd((success) => {
         // Não adicionamos créditos aqui, pois isso é feito no handleAdCompleted
-        console.log('Anúncio exibido com sucesso:', success);
+        console.log('CreditsContext: Callback do anúncio chamado com sucesso:', success);
       });
+      
+      console.log('CreditsContext: Anúncio iniciado com sucesso');
       return true;
     } catch (error) {
-      console.error('Erro ao exibir anúncio:', error);
+      console.error('CreditsContext: Erro ao exibir anúncio:', error);
+      setAdVisible(false); // Garantir que o modal seja fechado em caso de erro
       return false;
     }
   };
   
   // Função para fechar o anúncio
   const handleCloseAd = () => {
-    setAdVisible(false);
-    AdService.hideAd();
+    console.log('CreditsContext: handleCloseAd chamado');
+    try {
+      console.log('CreditsContext: Definindo adVisible como false');
+      setAdVisible(false);
+      
+      console.log('CreditsContext: Notificando AdService para esconder o anúncio');
+      AdService.hideAd();
+      
+      console.log('CreditsContext: Anúncio fechado com sucesso');
+    } catch (error) {
+      console.error('CreditsContext: Erro ao fechar anúncio:', error);
+    }
   };
   
   // Função chamada quando o anúncio é concluído
   const handleAdCompleted = () => {
-    // Fechar o anúncio e notificar o serviço
-    setAdVisible(false);
-    AdService.completeAd();
+    console.log('CreditsContext: handleAdCompleted chamado');
     
-    // Adicionar 2 créditos como recompensa pelo anúncio
-    const newCredits = credits + 2;
-    saveCredits(newCredits);
-    
-    console.log('Anúncio concluído! Créditos adicionados:', newCredits);
+    try {
+      // Fechar o anúncio e notificar o serviço
+      console.log('CreditsContext: Definindo adVisible como false');
+      setAdVisible(false);
+      
+      console.log('CreditsContext: Notificando AdService que o anúncio foi concluído');
+      AdService.completeAd();
+      
+      // Adicionar 2 créditos como recompensa pelo anúncio
+      const newCredits = credits + 2;
+      console.log('CreditsContext: Salvando novos créditos:', newCredits);
+      saveCredits(newCredits);
+      
+      console.log('CreditsContext: Anúncio concluído! Créditos adicionados:', newCredits);
+    } catch (error) {
+      console.error('CreditsContext: Erro ao processar conclusão do anúncio:', error);
+    }
   };
 
   return (
