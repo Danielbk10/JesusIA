@@ -76,6 +76,7 @@ export default function DemoAdScreen({ visible, onClose, onAdCompleted }) {
         console.log('DemoAdScreen: Chamando callback onAdCompleted');
         if (onAdCompleted) {
           try {
+            // Chamar o callback apenas uma vez
             onAdCompleted();
             console.log('DemoAdScreen: Callback onAdCompleted executado com sucesso');
           } catch (error) {
@@ -142,17 +143,7 @@ export default function DemoAdScreen({ visible, onClose, onAdCompleted }) {
               style={styles.closeButton}
               onPress={() => {
                 console.log('DemoAdScreen: Botão Continuar pressionado');
-                // Primeiro chamar o callback de conclusão se ainda não foi chamado
-                if (onAdCompleted) {
-                  try {
-                    console.log('DemoAdScreen: Executando callback de conclusão do botão Continuar');
-                    onAdCompleted();
-                    console.log('DemoAdScreen: Callback de conclusão executado com sucesso');
-                  } catch (error) {
-                    console.error('DemoAdScreen: Erro ao executar callback de conclusão:', error);
-                  }
-                }
-                // Depois fechar o modal
+                // Apenas fechar o modal, o callback de conclusão já foi chamado pelo useEffect
                 if (onClose) {
                   console.log('DemoAdScreen: Fechando modal');
                   onClose();

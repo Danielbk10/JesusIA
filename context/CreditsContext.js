@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 import DemoAdScreen from '../components/DemoAdScreen';
 
 // Definição dos planos de assinatura
@@ -279,21 +280,30 @@ export const CreditsProvider = ({ children }) => {
     console.log('CreditsContext: handleAdCompleted chamado');
     
     try {
-      // Fechar o anúncio e notificar o serviço
-      console.log('CreditsContext: Definindo adVisible como false');
-      setAdVisible(false);
-      
-      console.log('CreditsContext: Notificando AdService que o anúncio foi concluído');
-      AdService.completeAd();
-      
       // Adicionar 2 créditos como recompensa pelo anúncio
       const newCredits = credits + 2;
       console.log('CreditsContext: Salvando novos créditos:', newCredits);
       saveCredits(newCredits);
       
+      // Notificar o serviço que o anúncio foi concluído
+      console.log('CreditsContext: Notificando AdService que o anúncio foi concluído');
+      AdService.completeAd();
+      
+      // Fechar o anúncio após adicionar os créditos
+      console.log('CreditsContext: Definindo adVisible como false');
+      setAdVisible(false);
+      
+      // Mostrar alerta de sucesso
+      Alert.alert(
+        'Créditos Adicionados',
+        `Você ganhou 2 créditos por assistir ao anúncio! Agora você tem ${newCredits} créditos.`,
+        [{ text: 'OK' }]
+      );
+      
       console.log('CreditsContext: Anúncio concluído! Créditos adicionados:', newCredits);
     } catch (error) {
       console.error('CreditsContext: Erro ao processar conclusão do anúncio:', error);
+      Alert.alert('Erro', 'Ocorreu um erro ao adicionar créditos. Por favor, tente novamente.');
     }
   };
 
