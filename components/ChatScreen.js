@@ -47,7 +47,10 @@ export default function ChatScreen({ currentChat, onOpenPlans }) {
   useEffect(() => {
     // Registrar a data de último acesso ao iniciar
     const registerLastAccess = async () => {
-      await AsyncStorage.setItem('last_access_date', new Date().toDateString());
+      const userId = user?.id;
+      const userPrefix = userId ? `user_${userId}_` : '';
+      await AsyncStorage.setItem(`${userPrefix}last_access_date`, new Date().toDateString());
+      console.log(`Data de último acesso registrada para usuário ${userId || 'anônimo'}`);
     };
     registerLastAccess();
     
@@ -56,7 +59,8 @@ export default function ChatScreen({ currentChat, onOpenPlans }) {
       // Quando o app vai para background ou é fechado
       if (appState.current.match(/active/) && nextAppState.match(/inactive|background/)) {
         console.log('App passou para background ou foi fechado');
-        closeSession(); // Marcar a sessão como fechada
+        // Passar o ID do usuário para a função closeSession
+        closeSession(user?.id); // Marcar a sessão como fechada
       }
       
       // Quando o app volta a ficar ativo
@@ -70,20 +74,26 @@ export default function ChatScreen({ currentChat, onOpenPlans }) {
     return () => {
       subscription.remove();
     };
-  }, []);
+  }, [user]);
 
   // Carregar mensagens do armazenamento local ou do chat selecionado
   useEffect(() => {
     const loadMessages = async () => {
       try {
+        const userId = user?.id;
+        console.log('Carregando mensagens para usuário:', userId || 'anônimo');
+        
         // Se um chat foi selecionado do histórico, carregamos suas mensagens
         if (currentChat) {
           const chatId = currentChat.id;
+          console.log('Carregando chat específico do histórico:', chatId);
           const storedMessages = await AsyncStorage.getItem(`chat_${chatId}`);
           
           if (storedMessages) {
             setMessages(JSON.parse(storedMessages));
+            console.log('Mensagens carregadas do histórico com sucesso');
           } else {
+            console.log('Mensagens não encontradas, criando com base no título');
             // Se não houver mensagens salvas para este chat, criamos com base no título
             setMessages([
               {
@@ -110,16 +120,18 @@ export default function ChatScreen({ currentChat, onOpenPlans }) {
         }
         
         // Verificar se devemos iniciar um novo chat
-        const shouldStart = await shouldStartNewChat();
+        const shouldStart = await shouldStartNewChat(userId);
         
         if (shouldStart) {
           // Iniciar um novo chat
-          console.log('Iniciando um novo chat');
-          const initialMessage = await startNewChat();
+          console.log(`Iniciando um novo chat para usuário ${userId || 'anônimo'}`);
+          const initialMessage = await startNewChat(userId);
           if (initialMessage) {
             setMessages([initialMessage]);
+            console.log('Novo chat iniciado com sucesso');
           } else {
             // Fallback se houver erro
+            console.log('Erro ao iniciar novo chat, usando mensagem padrão');
             setMessages([
               {
                 id: Date.now().toString(),
@@ -133,17 +145,21 @@ export default function ChatScreen({ currentChat, onOpenPlans }) {
         }
         
         // Se não precisamos iniciar um novo chat, verificamos se há um chat atual salvo
+        const userPrefix = userId ? `user_${userId}_` : '';
         const currentChatId = await AsyncStorage.getItem('current_chat_id');
         
         if (currentChatId) {
+          console.log(`Carregando chat atual: ${currentChatId}`);
           const storedMessages = await AsyncStorage.getItem(`chat_${currentChatId}`);
           if (storedMessages) {
             setMessages(JSON.parse(storedMessages));
+            console.log('Mensagens do chat atual carregadas com sucesso');
             return;
           }
         }
         
         // Se não houver chat atual, mostramos a mensagem inicial
+        console.log('Nenhum chat atual encontrado, iniciando com mensagem padrão');
         setMessages([
           {
             id: '1',
@@ -167,7 +183,7 @@ export default function ChatScreen({ currentChat, onOpenPlans }) {
     };
     
     loadMessages();
-  }, [currentChat]);
+  }, [currentChat, user]);
 
   // Rolar para o final da lista quando novas mensagens são adicionadas
   useEffect(() => {
