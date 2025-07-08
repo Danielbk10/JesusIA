@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de QR Code para JesusIA</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        h1, h2 {
+            color: #4a148c;
+            text-align: center;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .qr-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], 
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4a148c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #7b1fa2;
+        }
+        .network-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 5px;
+            border-left: 4px solid #4caf50;
+        }
+        .url-display {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+            word-break: break-all;
+            font-family: monospace;
+        }
+        .copy-btn {
+            margin-top: 10px;
+            background-color: #2196f3;
+        }
+        .copy-btn:hover {
+            background-color: #0d8bf2;
+        }
+        .switch-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin-right: 10px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #4a148c;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+            border-radius: 5px 5px 0 0;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            color: #333;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #4a148c;
+            color: white;
+        }
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            animation: fadeEffect 1s;
+        }
+        @keyframes fadeEffect {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+    </style>
+</head>
+<body>
+    <h1>Gerador de QR Code para JesusIA</h1>
+    
+    <div class="container">
+        <div class="network-info">
+            <h3>Informações de Rede</h3>
+            <div id="ipAddresses">Carregando endereços IP...</div>
+        </div>
+
+        <div class="tab">
+            <button class="tablinks active" onclick="openTab(event, 'ExpoTab')">Expo Go</button>
+            <button class="tablinks" onclick="openTab(event, 'CustomTab')">URL Personalizada</button>
+        </div>
+
+        <div id="ExpoTab" class="tabcontent" style="display: block;">
+            <h2>Gerar QR Code para Expo Go</h2>
+            
+            <div class="form-group">
+                <label for="ipSelect">Selecione seu endereço IP:</label>
+                <select id="ipSelect">
+                    <option value="">Carregando...</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="port">Porta:</label>
+                <input type="number" id="port" value="19000" />
+            </div>
+            
+            <div class="form-group">
+                <label for="projectId">ID do Projeto (opcional):</label>
+                <input type="text" id="projectId" placeholder="Deixe em branco para usar o padrão" />
+            </div>
+            
+            <button onclick="generateExpoQR()">Gerar QR Code</button>
+        </div>
+
+        <div id="CustomTab" class="tabcontent">
+            <h2>Gerar QR Code Personalizado</h2>
+            
+            <div class="form-group">
+                <label for="customUrl">URL Personalizada:</label>
+                <input type="text" id="customUrl" placeholder="https://exemplo.com" />
+            </div>
+            
+            <button onclick="generateCustomQR()">Gerar QR Code</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="qr-container">
+            <h3 id="qrTitle">QR Code</h3>
+            <canvas id="qrcode"></canvas>
+            <div class="url-display" id="urlDisplay"></div>
+            <button class="copy-btn" onclick="copyUrl()">Copiar URL</button>
+        </div>
+    </div>
+
+    <script>
+        // Função para obter endereços IP
+        async function getIpAddresses() {
+            try {
+                const interfaces = [];
+                
+                // Adicionar localhost
+                interfaces.push({
+                    name: "Localhost",
+                    address: "127.0.0.1"
+                });
+                
+                // Adicionar alguns IPs comuns de rede local
+                const commonIps = [
+                    "192.168.0.1", "192.168.0.100", "192.168.0.101", "192.168.0.102",
+                    "192.168.1.1", "192.168.1.100", "192.168.1.101", "192.168.1.102",
+                    "192.168.2.1", "192.168.2.100", "192.168.2.101", "192.168.2.102",
+                    "10.0.0.1", "10.0.0.100", "10.0.0.101", "10.0.0.102"
+                ];
+                
+                commonIps.forEach(ip => {
+                    interfaces.push({
+                        name: `Possível IP local (${ip})`,
+                        address: ip
+                    });
+                });
+                
+                // Atualizar o select com os IPs
+                const ipSelect = document.getElementById('ipSelect');
+                ipSelect.innerHTML = '';
+                
+                interfaces.forEach(iface => {
+                    const option = document.createElement('option');
+                    option.value = iface.address;
+                    option.textContent = `${iface.name} (${iface.address})`;
+                    ipSelect.appendChild(option);
+                });
+                
+                // Exibir informações de rede
+                const ipAddressesDiv = document.getElementById('ipAddresses');
+                ipAddressesDiv.innerHTML = `
+                    <p><strong>Nota importante:</strong> Como não é possível detectar automaticamente seu endereço IP nesta página, 
+                    você precisará selecionar o endereço IP correto da sua rede Wi-Fi.</p>
+                    <p>Para descobrir seu endereço IP:</p>
+                    <ol>
+                        <li>No Windows: Abra o Prompt de Comando e digite <code>ipconfig</code></li>
+                        <li>No Mac/Linux: Abra o Terminal e digite <code>ifconfig</code> ou <code>ip addr</code></li>
+                        <li>Procure por "IPv4 Address" ou similar, geralmente começando com 192.168.x.x ou 10.x.x.x</li>
+                    </ol>
+                    <p>Certifique-se de que seu dispositivo móvel esteja na mesma rede Wi-Fi que seu computador.</p>
+                `;
+                
+            } catch (error) {
+                console.error('Erro ao obter endereços IP:', error);
+                document.getElementById('ipAddresses').innerHTML = 'Erro ao obter endereços IP. Por favor, insira manualmente.';
+            }
+        }
+
+        // Função para gerar QR code para Expo
+        function generateExpoQR() {
+            const ip = document.getElementById('ipSelect').value;
+            const port = document.getElementById('port').value;
+            const projectId = document.getElementById('projectId').value;
+            
+            // Gerar timestamp para garantir URL única
+            const timestamp = new Date().getTime();
+            
+            // Construir URL do Expo
+            let url;
+            if (ip) {
+                // URL para acessar o app via Expo Go com IP local
+                url = `exp://${ip}:${port}`;
+            } else {
+                // URL para acessar o app via Expo Go publicado
+                url = `exp://exp.host/@transmutebr/JesusIA?release-channel=default`;
+                
+                if (projectId) {
+                    url += `&projectId=${projectId}`;
+                }
+            }
+            
+            // Adicionar timestamp
+            url += `&ts=${timestamp}`;
+            
+            // Gerar QR code
+            generateQR(url);
+            
+            // Atualizar título
+            document.getElementById('qrTitle').textContent = 'QR Code para Expo Go';
+        }
+
+        // Função para gerar QR code personalizado
+        function generateCustomQR() {
+            const url = document.getElementById('customUrl').value;
+            if (!url) {
+                alert('Por favor, insira uma URL válida');
+                return;
+            }
+            
+            // Gerar QR code
+            generateQR(url);
+            
+            // Atualizar título
+            document.getElementById('qrTitle').textContent = 'QR Code Personalizado';
+        }
+
+        // Função para gerar QR code
+        function generateQR(url) {
+            const canvas = document.getElementById('qrcode');
+            QRCode.toCanvas(canvas, url, { width: 300 }, function (error) {
+                if (error) {
+                    console.error('Erro ao gerar QR code:', error);
+                    alert('Erro ao gerar QR code. Por favor, tente novamente.');
+                }
+            });
+            
+            // Exibir URL
+            document.getElementById('urlDisplay').textContent = url;
+        }
+
+        // Função para copiar URL
+        function copyUrl() {
+            const url = document.getElementById('urlDisplay').textContent;
+            if (!url) {
+                alert('Nenhuma URL para copiar');
+                return;
+            }
+            
+            navigator.clipboard.writeText(url)
+                .then(() => {
+                    alert('URL copiada para a área de transferência!');
+                })
+                .catch(err => {
+                    console.error('Erro ao copiar URL:', err);
+                    alert('Erro ao copiar URL. Por favor, copie manualmente.');
+                });
+        }
+
+        // Função para abrir abas
+        function openTab(evt, tabName) {
+            const tabcontent = document.getElementsByClassName("tabcontent");
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            
+            const tablinks = document.getElementsByClassName("tablinks");
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        // Inicializar
+        window.onload = function() {
+            getIpAddresses();
+        };
+    </script>
+</body>
+</html>

@@ -6,7 +6,8 @@ import {
   Modal, 
   TouchableOpacity, 
   Image,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import { FONTS } from '../config/fontConfig';
 import { COLORS } from '../config/colorConfig';
@@ -14,85 +15,75 @@ import { COLORS } from '../config/colorConfig';
 export default function DemoAdScreen({ visible, onClose, onAdCompleted }) {
   const [countdown, setCountdown] = useState(5);
   const [adState, setAdState] = useState('loading'); // loading, playing, completed
+  const [callbackExecuted, setCallbackExecuted] = useState(false);
   
-  // Simular carregamento do anúncio
-  useEffect(() => {
-    console.log('DemoAdScreen: visible =', visible, 'adState =', adState);
-    if (visible && adState === 'loading') {
-      console.log('DemoAdScreen: Iniciando carregamento do anúncio');
-      // Simular tempo de carregamento
-      const loadTimer = setTimeout(() => {
-        console.log('DemoAdScreen: Anúncio carregado, iniciando exibição');
-        setAdState('playing');
-        // Iniciar contagem regressiva
-        startCountdown();
-      }, 1500);
-      
-      return () => {
-        console.log('DemoAdScreen: Limpando timer de carregamento');
-        clearTimeout(loadTimer);
-      };
-    }
-  }, [visible, adState]);
-  
-  // Função para iniciar a contagem regressiva
-  const startCountdown = () => {
-    console.log('DemoAdScreen: Iniciando contagem regressiva de', countdown, 'segundos');
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        console.log('DemoAdScreen: Contagem regressiva:', prev - 1);
-        if (prev <= 1) {
-          console.log('DemoAdScreen: Contagem regressiva concluída, marcando anúncio como completo');
-          clearInterval(timer);
-          setAdState('completed');
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    
-    return () => {
-      console.log('DemoAdScreen: Limpando timer de contagem regressiva');
-      clearInterval(timer);
-    };
-  };
-  
-  // Resetar estado quando o modal é fechado
+  // Forçar a atualização do estado quando a visibilidade muda
   useEffect(() => {
     console.log('DemoAdScreen: Visibilidade mudou para', visible ? 'visível' : 'invisível');
+    
+    // Resetar o estado quando o modal é fechado
     if (!visible) {
-      console.log('DemoAdScreen: Resetando estado do anúncio');
-      setCountdown(5);
+      setCallbackExecuted(false);
       setAdState('loading');
+      setCountdown(5);
     }
   }, [visible]);
   
-  // Chamar callback quando o anúncio for concluído
+  // Efeito separado para lidar com a lógica do anúncio quando visível
   useEffect(() => {
-    if (adState === 'completed') {
-      console.log('DemoAdScreen: Anúncio marcado como concluído, preparando callback');
-      // Dar um pequeno atraso antes de chamar o callback
-      const completionTimer = setTimeout(() => {
-        console.log('DemoAdScreen: Chamando callback onAdCompleted');
-        if (onAdCompleted) {
-          try {
-            // Chamar o callback apenas uma vez
-            onAdCompleted();
-            console.log('DemoAdScreen: Callback onAdCompleted executado com sucesso');
-          } catch (error) {
-            console.error('DemoAdScreen: Erro ao executar callback onAdCompleted:', error);
-          }
-        } else {
-          console.warn('DemoAdScreen: Callback onAdCompleted não fornecido');
-        }
-      }, 1000);
+    let loadTimer = null;
+    let countdownTimer = null;
+    
+    if (visible) {
+      // Quando o modal é aberto, iniciamos o anúncio
+      console.log('DemoAdScreen: Modal aberto, iniciando anúncio');
       
-      return () => {
-        console.log('DemoAdScreen: Limpando timer de conclusão');
-        clearTimeout(completionTimer);
-      };
+      // Simular carregamento do anúncio
+      loadTimer = setTimeout(() => {
+        console.log('DemoAdScreen: Anúncio carregado, iniciando exibição');
+        if (visible) { // Verificar se ainda está visível
+          setAdState('playing');
+          
+          // Iniciar contagem regressiva
+          countdownTimer = setInterval(() => {
+            setCountdown((prev) => {
+              const newValue = prev - 1;
+              console.log('DemoAdScreen: Contagem regressiva:', newValue);
+              
+              if (newValue <= 0) {
+                console.log('DemoAdScreen: Contagem regressiva concluída');
+                clearInterval(countdownTimer);
+                
+                if (visible) { // Verificar se ainda está visível
+                  setAdState('completed');
+                  
+                  // Chamar o callback de conclusão imediatamente
+                  if (!callbackExecuted && onAdCompleted) {
+                    try {
+                      console.log('DemoAdScreen: Executando callback de conclusão');
+                      setCallbackExecuted(true);
+                      onAdCompleted();
+                    } catch (error) {
+                      console.error('DemoAdScreen: Erro ao executar callback:', error);
+                      Alert.alert('Erro', 'Ocorreu um erro ao processar o anúncio. Tente novamente.');
+                    }
+                  }
+                }
+              }
+              return newValue;
+            });
+          }, 1000);
+        }
+      }, 1500);
     }
-  }, [adState, onAdCompleted]);
+    
+    // Limpar os timers quando o componente for desmontado ou o modal for fechado
+    return () => {
+      console.log('DemoAdScreen: Limpando timers');
+      if (loadTimer) clearTimeout(loadTimer);
+      if (countdownTimer) clearInterval(countdownTimer);
+    };
+  }, [visible, onAdCompleted, callbackExecuted]);
   
   return (
     <Modal
@@ -100,20 +91,26 @@ export default function DemoAdScreen({ visible, onClose, onAdCompleted }) {
       transparent={false}
       animationType="slide"
       onRequestClose={() => {
-        // Não permitir fechar durante a exibição
+        // Só permitir fechar pelo botão de voltar do dispositivo quando o anúncio estiver concluído
         if (adState === 'completed') {
+          console.log('DemoAdScreen: Fechando modal pelo botão de voltar');
           onClose();
+        } else {
+          console.log('DemoAdScreen: Tentativa de fechar modal bloqueada - anúncio em andamento');
         }
       }}
     >
       <View style={styles.container}>
+        {/* Área de carregamento */}
         {adState === 'loading' && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={COLORS.PRIMARY} />
             <Text style={styles.loadingText}>Carregando anúncio...</Text>
+            <Text style={styles.loadingSubtext}>Aguarde um momento</Text>
           </View>
         )}
         
+        {/* Área de exibição do anúncio */}
         {adState === 'playing' && (
           <View style={styles.adContainer}>
             <View style={styles.adHeader}>
@@ -131,24 +128,33 @@ export default function DemoAdScreen({ visible, onClose, onAdCompleted }) {
               <Text style={styles.adDescription}>
                 Assine o plano premium e tenha acesso ilimitado a todas as funcionalidades!
               </Text>
+              <Text style={styles.adNote}>
+                Aguarde a contagem regressiva para ganhar seus créditos
+              </Text>
             </View>
           </View>
         )}
         
+        {/* Área de conclusão */}
         {adState === 'completed' && (
           <View style={styles.completedContainer}>
+            <Image 
+              source={require('../assets/images/icon.png')} 
+              style={styles.completedImage}
+              resizeMode="contain"
+            />
             <Text style={styles.completedTitle}>Obrigado por assistir!</Text>
             <Text style={styles.completedText}>Você ganhou 2 créditos</Text>
             <TouchableOpacity 
               style={styles.closeButton}
               onPress={() => {
                 console.log('DemoAdScreen: Botão Continuar pressionado');
-                // Apenas fechar o modal, o callback de conclusão já foi chamado pelo useEffect
                 if (onClose) {
-                  console.log('DemoAdScreen: Fechando modal');
+                  console.log('DemoAdScreen: Fechando modal pelo botão Continuar');
                   onClose();
                 } else {
                   console.warn('DemoAdScreen: Callback onClose não fornecido');
+                  Alert.alert('Erro', 'Não foi possível fechar o anúncio. Tente novamente.');
                 }
               }}
             >
@@ -169,15 +175,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
+  // Estilos para o estado de carregamento
   loadingContainer: {
     alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: 200,
   },
   loadingText: {
     color: '#fff',
     marginTop: 16,
-    fontSize: 16,
+    fontSize: 18,
+    fontFamily: FONTS.SERIF,
+    fontWeight: 'bold',
+  },
+  loadingSubtext: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: 8,
+    fontSize: 14,
     fontFamily: FONTS.SERIF,
   },
+  // Estilos para o container do anúncio
   adContainer: {
     width: '100%',
     height: '80%',
@@ -186,22 +204,31 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(184, 157, 76, 0.3)',
+    elevation: 5,
+    shadowColor: COLORS.PRIMARY,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   adHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 10,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    padding: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(184, 157, 76, 0.3)',
   },
   adLabel: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 16,
     fontFamily: FONTS.SERIF,
+    fontWeight: 'bold',
   },
   countdownText: {
-    color: '#fff',
-    fontSize: 14,
+    color: COLORS.PRIMARY,
+    fontSize: 16,
     fontFamily: FONTS.SERIF,
+    fontWeight: 'bold',
   },
   adContent: {
     flex: 1,
@@ -219,7 +246,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: FONTS.SERIF,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 15,
     textAlign: 'center',
   },
   adDescription: {
@@ -228,33 +255,61 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.SERIF,
     textAlign: 'center',
     lineHeight: 26,
+    marginBottom: 20,
   },
+  adNote: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 14,
+    fontFamily: FONTS.SERIF,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: 15,
+  },
+  // Estilos para o estado de conclusão
   completedContainer: {
     alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    padding: 20,
+  },
+  completedImage: {
+    width: 100,
+    height: 100,
+    marginBottom: 20,
   },
   completedTitle: {
     color: '#fff',
-    fontSize: 24,
+    fontSize: 26,
     fontFamily: FONTS.SERIF,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 15,
+    textAlign: 'center',
   },
   completedText: {
-    color: '#fff',
-    fontSize: 18,
+    color: COLORS.PRIMARY,
+    fontSize: 20,
     fontFamily: FONTS.SERIF,
     marginBottom: 30,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   closeButton: {
     backgroundColor: COLORS.PRIMARY,
-    paddingHorizontal: 30,
+    paddingHorizontal: 40,
     paddingVertical: 15,
     borderRadius: 25,
+    marginTop: 10,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
   },
   closeButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: FONTS.SERIF,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
 });

@@ -192,8 +192,9 @@ const QRCodeScreen = ({ onClose }) => {
         </View>
         
         <View style={styles.updateInfoContainer}>
-          <Text style={styles.updateInfoText}>QR Code atualizado para nova rede WiFi</Text>
+          <Text style={styles.updateInfoText}>QR Code atualizado para nova rede WiFi!</Text>
           <Text style={styles.updateTimeText}>Última atualização: {lastUpdated}</Text>
+          <Text style={styles.updateNoteText}>Este QR code é único e foi gerado especificamente para sua rede atual.</Text>
         </View>
         
         <View style={styles.urlContainer}>
@@ -443,6 +444,14 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.7)',
     fontSize: 12,
     fontFamily: FONTS.SERIF,
+    marginBottom: 4,
+  },
+  updateNoteText: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 12,
+    fontFamily: FONTS.SERIF,
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
 });
 
