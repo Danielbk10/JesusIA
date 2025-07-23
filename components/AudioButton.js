@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Modal, Text, Alert } from 'react-native';
 import { Audio } from 'expo-av';
-import { MicIcon } from './Icon';
+import { Ionicons } from '@expo/vector-icons';
+import { COLORS } from '../config/colorConfig';
+import { FONTS } from '../config/fontConfig';
 import { useCredits } from '../context/CreditsContext';
 import { transcribeAudio } from '../services/apiService';
-import { COLORS } from '../config/colorConfig';
+import CreditWarningModal from './CreditWarningModal';
 
-export default function AudioButton({ onSendAudio }) {
+const MicIcon = ({ size, color }) => (
+  <Ionicons name="mic" size={size} color={color} />
+);
+
+export default function AudioButton({ onSendAudio, onOpenPlans }) {
   const [recording, setRecording] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const { useCredit, credits, plan } = useCredits();
+  const [showCreditWarning, setShowCreditWarning] = useState(false);
 
   // Limpar o gravador quando o componente é desmontado
   useEffect(() => {
@@ -63,11 +70,7 @@ export default function AudioButton({ onSendAudio }) {
 
       // Verificar se há créditos disponíveis
       if (credits <= 0 && plan === 'free') {
-        Alert.alert(
-          'Sem créditos',
-          'Você não tem créditos suficientes para enviar uma mensagem. Assista a um anúncio para ganhar mais créditos ou faça upgrade para um plano premium.',
-          [{ text: 'OK' }]
-        );
+        setShowCreditWarning(true);
         return;
       }
 
@@ -177,10 +180,7 @@ export default function AudioButton({ onSendAudio }) {
       // Consumir um crédito
       const hasCredit = await useCredit();
       if (!hasCredit) {
-        Alert.alert(
-          'Sem créditos',
-          'Você não tem créditos suficientes para enviar uma mensagem. Assista a um anúncio para ganhar mais créditos ou faça upgrade para um plano premium.'
-        );
+        setShowCreditWarning(true);
         return;
       }
       
@@ -265,23 +265,46 @@ export default function AudioButton({ onSendAudio }) {
       >
         <MicIcon size={24} color="#FFFFFF" />
       </TouchableOpacity>
+      
+      {/* Componente reutilizável de aviso de créditos insuficientes */}
+      <CreditWarningModal
+        visible={showCreditWarning}
+        onClose={() => setShowCreditWarning(false)}
+        onOpenPlans={onOpenPlans}
+        onCreditAdded={async () => {
+          // Tentar processar o áudio novamente após ganhar créditos
+          if (recording) {
+            const uri = recording.getURI();
+            if (uri) {
+              await processAudio(uri);
+            }
+          }
+        }}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 5,
   },
   button: {
     backgroundColor: COLORS.PRIMARY,
     width: 48,
     height: 48,
     borderRadius: 24,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   recordingButton: {
-    backgroundColor: '#ff4040',
-  },
+    backgroundColor: '#E53935',
+  }
 });

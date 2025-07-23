@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -10,79 +10,118 @@ import {
   Platform,
   ScrollView,
   Alert,
-  ImageBackground
+  ImageBackground,
+  ActivityIndicator
 } from 'react-native';
 import { useUser } from '../context/UserContext';
 import { FONTS } from '../config/fontConfig';
 import { COLORS } from '../config/colorConfig';
+import { FontAwesome, AntDesign } from '@expo/vector-icons';
 
 export default function LoginScreen({ onLoginSuccess }) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const { updateUser } = useUser();
+  const [authLoading, setAuthLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [facebookLoading, setFacebookLoading] = useState(false);
+  const { 
+    user, 
+    loginWithGoogle, 
+    loginWithFacebook, 
+    loading: userContextLoading,
+    updateUser
+  } = useUser();
 
-  const handleAuth = () => {
-    // Validação básica
-    if (!email.trim()) {
-      Alert.alert('Erro', 'Por favor, insira seu email');
-      return;
+  // Redirecionar se já estiver logado
+  useEffect(() => {
+    if (user) {
+      console.log('LoginScreen: Usuário detectado, redirecionando...', user.displayName);
+      // Pequeno delay para garantir que a animação de carregamento seja visível
+      const timer = setTimeout(() => {
+        onLoginSuccess();
+      }, 500);
+      return () => clearTimeout(timer);
     }
-    
-    if (!password.trim() || password.length < 6) {
-      Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres');
-      return;
-    }
-    
-    if (!isLogin && !name.trim()) {
-      Alert.alert('Erro', 'Por favor, insira seu nome');
-      return;
-    }
+  }, [user, onLoginSuccess]);
 
-    // Simulação de autenticação
-    // Em um app real, você conectaria com Firebase, Auth0, etc.
-    setTimeout(() => {
+  const handleAuth = async () => {
+    try {
+      // Validação básica
+      if (!email.trim()) {
+        Alert.alert('Erro', 'Por favor, insira seu email');
+        return;
+      }
+      
+      if (!password.trim() || password.length < 6) {
+        Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres');
+        return;
+      }
+      
+      if (!isLogin && !name.trim()) {
+        Alert.alert('Erro', 'Por favor, insira seu nome');
+        return;
+      }
+
+      // Iniciar carregamento
+      setAuthLoading(true);
+      
+      // Simulação de autenticação com email/senha
+      // Em um app real, você conectaria com Firebase, Auth0, etc.
+      console.log(`LoginScreen: Iniciando login com email para: ${email}`);
+      
+      // Simular tempo de resposta da API
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       const userData = {
-        id: '123456',
+        id: `email-${Date.now()}`,
         email: email,
-        displayName: isLogin ? 'Usuário' : name,
-        photoURL: null,
+        displayName: isLogin ? email.split('@')[0] : name,
+        photoURL: `https://ui-avatars.com/api/?name=${encodeURIComponent(isLogin ? email.split('@')[0] : name)}&background=random&color=fff`,
+        provider: 'email',
+        createdAt: new Date().toISOString()
       };
       
-      updateUser(userData);
+      console.log('LoginScreen: Login com email bem-sucedido, atualizando usuário');
+      await updateUser(userData);
       onLoginSuccess();
-    }, 1000);
+    } catch (error) {
+      console.error('LoginScreen: Erro ao fazer login com email:', error);
+      Alert.alert('Erro', 'Falha ao fazer login. Tente novamente.');
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
-  const handleGoogleLogin = () => {
-    // Simulação de login com Google
-    setTimeout(() => {
-      const userData = {
-        id: 'google-123456',
-        email: 'usuario@gmail.com',
-        displayName: 'Usuário Google',
-        photoURL: 'https://ui-avatars.com/api/?name=Usuario+Google&background=random',
-      };
-      
-      updateUser(userData);
-      onLoginSuccess();
-    }, 1000);
+  const handleGoogleLogin = async () => {
+    try {
+      setGoogleLoading(true);
+      console.log('LoginScreen: Iniciando login com Google...');
+      await loginWithGoogle();
+      console.log('LoginScreen: Login com Google concluído com sucesso');
+      // O redirecionamento para a tela principal é tratado no useEffect que monitora o usuário
+    } catch (error) {
+      console.error('LoginScreen: Erro ao fazer login com Google:', error);
+      Alert.alert('Erro', 'Não foi possível fazer login com Google. Tente novamente.');
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
-  const handleMetaLogin = () => {
-    // Simulação de login com Meta
-    setTimeout(() => {
-      const userData = {
-        id: 'meta-123456',
-        email: 'usuario@facebook.com',
-        displayName: 'Usuário Facebook',
-        photoURL: 'https://ui-avatars.com/api/?name=Usuario+Facebook&background=random',
-      };
-      
-      updateUser(userData);
-      onLoginSuccess();
-    }, 1000);
+  const handleMetaLogin = async () => {
+    try {
+      setFacebookLoading(true);
+      console.log('LoginScreen: Iniciando login com Facebook...');
+      await loginWithFacebook();
+      console.log('LoginScreen: Login com Facebook concluído com sucesso');
+      // O redirecionamento para a tela principal é tratado no useEffect que monitora o usuário
+    } catch (error) {
+      console.error('LoginScreen: Erro ao fazer login com Facebook:', error);
+      Alert.alert('Erro', 'Não foi possível fazer login com Facebook. Tente novamente.');
+    } finally {
+      setFacebookLoading(false);
+    }
   };
 
   return (
@@ -138,12 +177,17 @@ export default function LoginScreen({ onLoginSuccess }) {
           />
           
           <TouchableOpacity 
-            style={styles.authButton}
+            style={[styles.authButton, authLoading && styles.authButtonDisabled]}
             onPress={handleAuth}
+            disabled={authLoading}
           >
-            <Text style={styles.authButtonText}>
-              {isLogin ? 'Entrar' : 'Cadastrar'}
-            </Text>
+            {authLoading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Text style={styles.authButtonText}>
+                {isLogin ? 'Entrar' : 'Cadastrar'}
+              </Text>
+            )}
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -161,17 +205,33 @@ export default function LoginScreen({ onLoginSuccess }) {
           
           <View style={styles.socialButtons}>
             <TouchableOpacity 
-              style={styles.socialButton}
+              style={[styles.socialButton, { backgroundColor: '#DB4437' }]}
               onPress={handleGoogleLogin}
+              disabled={googleLoading || userContextLoading}
             >
-              <Text style={styles.socialButtonText}>Google</Text>
+              {googleLoading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <View style={styles.socialButtonContent}>
+                  <AntDesign name="google" size={20} color="#fff" />
+                  <Text style={styles.socialButtonText}>Google</Text>
+                </View>
+              )}
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={styles.socialButton}
+              style={[styles.socialButton, { backgroundColor: '#4267B2' }]}
               onPress={handleMetaLogin}
+              disabled={facebookLoading || userContextLoading}
             >
-              <Text style={styles.socialButtonText}>Meta</Text>
+              {facebookLoading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <View style={styles.socialButtonContent}>
+                  <FontAwesome name="facebook" size={20} color="#fff" />
+                  <Text style={styles.socialButtonText}>Facebook</Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -182,6 +242,10 @@ export default function LoginScreen({ onLoginSuccess }) {
 }
 
 const styles = StyleSheet.create({
+  authButtonDisabled: {
+    backgroundColor: COLORS.PRIMARY_DARK || '#444',
+    opacity: 0.7,
+  },
   backgroundImage: {
     flex: 1,
   },
@@ -256,6 +320,7 @@ const styles = StyleSheet.create({
   },
   socialContainer: {
     alignItems: 'center',
+    marginTop: 20,
   },
   socialText: {
     color: '#aaa',
@@ -269,15 +334,26 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   socialButton: {
-    backgroundColor: '#333',
     borderRadius: 8,
-    padding: 15,
+    padding: 12,
     width: '45%',
     alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  socialButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   socialButtonText: {
     color: '#fff',
     fontSize: 16,
     fontFamily: FONTS.SERIF,
+    marginLeft: 8,
   },
 });

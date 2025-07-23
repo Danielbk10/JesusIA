@@ -1,34 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  FlatList, 
-  StyleSheet, 
-  KeyboardAvoidingView, 
-  Platform, 
-  ActivityIndicator, 
-  ImageBackground, 
-  Alert, 
-  ScrollView, 
-  Image,
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  AppState,
   Pressable,
-  AppState
 } from 'react-native';
-import { SendIcon } from './Icon';
-import AudioButton from './AudioButton';
-import ShareCard from './ShareCard';
-import SpeechToggleButton from './SpeechToggleButton';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Ionicons } from '@expo/vector-icons';
+import { COLORS } from '../config/colorConfig';
+import { FONTS } from '../config/fontConfig';
 import { useCredits } from '../context/CreditsContext';
 import { useUser } from '../context/UserContext';
 import { useDevotionals } from '../context/DevotionalsContext';
 import { useSpeech } from '../context/SpeechContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AudioButton from './AudioButton';
+import ShareCard from './ShareCard';
+import SpeechToggleButton from './SpeechToggleButton';
+import CreditWarningModal from './CreditWarningModal';
 import { getChatResponse } from '../services/apiService';
-import { FONTS } from '../config/fontConfig';
-import { COLORS } from '../config/colorConfig';
-import { shouldStartNewChat, closeSession, startNewChat } from '../utils/chatSessionUtils';
+import { closeSession, startNewChat, shouldStartNewChat } from '../utils/chatSessionUtils';
 
 export default function ChatScreen({ currentChat, onOpenPlans }) {
   const [message, setMessage] = useState('');
@@ -36,6 +34,7 @@ export default function ChatScreen({ currentChat, onOpenPlans }) {
   const [loading, setLoading] = useState(false);
   const [selectedText, setSelectedText] = useState('');
   const [showShareCard, setShowShareCard] = useState(false);
+  const [showCreditWarning, setShowCreditWarning] = useState(false);
   const { useCredit, credits, plan, saveCredits, earnCreditsFromAd } = useCredits();
   const { user } = useUser();
   const { saveDevotional } = useDevotionals();
@@ -198,93 +197,7 @@ export default function ChatScreen({ currentChat, onOpenPlans }) {
     // Verificar se há créditos disponíveis (apenas para planos gratuitos)
     if (credits <= 0 && plan === 'free') {
       console.log('ChatScreen: Créditos insuficientes, mostrando alerta');
-      Alert.alert(
-        'Créditos Insuficientes',
-        'Você não tem créditos suficientes. Assista a um anúncio para ganhar mais créditos ou faça upgrade para um plano premium.',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { 
-            text: 'Assistir Anúncio', 
-            onPress: async () => {
-              console.log('ChatScreen: Botão Assistir Anúncio pressionado');
-              
-              try {
-                // Verificar se o usuário já tem créditos
-                const storedCredits = await AsyncStorage.getItem('credits');
-                const parsedCredits = parseInt(storedCredits, 10);
-                
-                if (!isNaN(parsedCredits) && parsedCredits > 0) {
-                  console.log('ChatScreen: Usuário já tem créditos:', parsedCredits);
-                  // Atualizar o estado local
-                  saveCredits(parsedCredits);
-                  
-                  // Tentar enviar a mensagem novamente
-                  sendMessage(text);
-                  return;
-                }
-                
-                // Adicionar créditos diretamente para garantir que o usuário possa continuar
-                const newCredits = 2;
-                await AsyncStorage.setItem('credits', newCredits.toString());
-                console.log('ChatScreen: Créditos adicionados diretamente:', newCredits);
-                
-                // Atualizar o estado local usando a função do contexto
-                saveCredits(newCredits);
-                
-                // Mostrar alerta de sucesso
-                Alert.alert(
-                  'Créditos Adicionados',
-                  `Você ganhou 2 créditos por assistir ao anúncio! Agora você tem ${newCredits} créditos.`,
-                  [{ 
-                    text: 'OK',
-                    onPress: () => {
-                      // Tentar enviar a mensagem novamente após o usuário clicar em OK
-                      console.log('ChatScreen: Tentando enviar mensagem novamente após adicionar créditos');
-                      sendMessage(text);
-                    }
-                  }]
-                );
-                
-                // Tentar mostrar o anúncio apenas para fins de demonstração
-                // Usar setTimeout para evitar que erros no anúncio afetem o fluxo principal
-                setTimeout(() => {
-                  try {
-                    console.log('ChatScreen: Chamando earnCreditsFromAd');
-                    earnCreditsFromAd();
-                  } catch (adError) {
-                    console.error('ChatScreen: Erro ao chamar earnCreditsFromAd:', adError);
-                    // Não fazer nada, os créditos já foram adicionados
-                  }
-                }, 500);
-              } catch (error) {
-                console.error('ChatScreen: Erro ao adicionar créditos:', error);
-                
-                // Tentar adicionar créditos diretamente como fallback
-                try {
-                  const fallbackCredits = 2;
-                  await AsyncStorage.setItem('credits', fallbackCredits.toString());
-                  saveCredits(fallbackCredits);
-                  console.log('ChatScreen: Créditos adicionados como fallback após erro:', fallbackCredits);
-                  
-                  Alert.alert('Aviso', 'Houve um problema, mas você recebeu 2 créditos mesmo assim. Tente enviar sua mensagem novamente.');
-                } catch (fallbackError) {
-                  console.error('ChatScreen: Erro no fallback:', fallbackError);
-                  Alert.alert('Erro', 'Ocorreu um erro ao adicionar créditos. Por favor, reinicie o aplicativo.');
-                }
-              }
-            } 
-          },
-          { 
-            text: 'Ver Planos', 
-            onPress: () => {
-              // Abrir modal de planos
-              if (onOpenPlans) {
-                onOpenPlans();
-              }
-            } 
-          }
-        ]
-      );
+      setShowCreditWarning(true);
       return;
     }
 
@@ -300,60 +213,13 @@ export default function ChatScreen({ currentChat, onOpenPlans }) {
       if (storedCredits && parseInt(storedCredits) > 0) {
         console.log('ChatScreen: Créditos encontrados no AsyncStorage, atualizando estado local');
         // Atualizar o estado local com os créditos do AsyncStorage
-        setCredits(parseInt(storedCredits));
+        saveCredits(parseInt(storedCredits));
         // Tentar enviar a mensagem novamente
         sendMessage(text);
         return;
       }
       
-      Alert.alert(
-        'Créditos Insuficientes',
-        'Você não tem créditos suficientes. Assista a um anúncio para ganhar mais créditos ou faça upgrade para um plano premium.',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { 
-            text: 'Assistir Anúncio', 
-            onPress: async () => {
-              console.log('ChatScreen: Botão Assistir Anúncio pressionado');
-              const success = await earnCreditsFromAd();
-              console.log('ChatScreen: Resultado de earnCreditsFromAd:', success);
-              
-              if (success) {
-                // Aguardar um pouco para garantir que os créditos foram adicionados
-                setTimeout(async () => {
-                  // Verificar se os créditos foram adicionados
-                  const updatedCredits = await AsyncStorage.getItem('credits');
-                  console.log('ChatScreen: Créditos após assistir anúncio:', updatedCredits);
-                  
-                  if (updatedCredits && parseInt(updatedCredits) > 0) {
-                    // Atualizar o estado local
-                    setCredits(parseInt(updatedCredits));
-                    // Tentar enviar a mensagem novamente
-                    sendMessage(text);
-                  } else {
-                    // Forçar a adição de créditos como fallback
-                    const fallbackCredits = 2;
-                    await AsyncStorage.setItem('credits', fallbackCredits.toString());
-                    setCredits(fallbackCredits);
-                    console.log('ChatScreen: Adicionando créditos de fallback:', fallbackCredits);
-                    // Tentar enviar a mensagem novamente
-                    sendMessage(text);
-                  }
-                }, 1000);
-              }
-            } 
-          },
-          { 
-            text: 'Ver Planos', 
-            onPress: () => {
-              // Abrir modal de planos
-              if (onOpenPlans) {
-                onOpenPlans();
-              }
-            } 
-          }
-        ]
-      );
+      setShowCreditWarning(true);
       return;
     }
 
@@ -563,10 +429,10 @@ export default function ChatScreen({ currentChat, onOpenPlans }) {
               style={styles.sendButton}
               onPress={() => sendMessage()}
             >
-              <SendIcon size={24} color="#fff" />
+              <Ionicons name="send" size={24} color="#fff" />
             </TouchableOpacity>
           ) : (
-            <AudioButton onSendAudio={handleAudioMessage} />
+            <AudioButton onSendAudio={handleAudioMessage} onOpenPlans={onOpenPlans} />
           )}
         </View>
       </View>
@@ -578,6 +444,19 @@ export default function ChatScreen({ currentChat, onOpenPlans }) {
           onClose={() => setShowShareCard(false)}
         />
       )}
+      
+      {/* Componente reutilizável de aviso de créditos insuficientes */}
+      <CreditWarningModal
+        visible={showCreditWarning}
+        onClose={() => setShowCreditWarning(false)}
+        onOpenPlans={onOpenPlans}
+        onCreditAdded={() => {
+          // Tentar enviar a mensagem novamente após ganhar créditos
+          if (message.trim()) {
+            sendMessage(message);
+          }
+        }}
+      />
       </KeyboardAvoidingView>
     </View>
   );
@@ -689,5 +568,76 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 8,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: COLORS.TEXT_MUTED,
+    textAlign: 'center',
+  },
+  creditWarningModal: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  creditWarningContent: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    width: '80%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  creditWarningHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  creditWarningTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 8,
+    color: '#000',
+  },
+  creditWarningText: {
+    fontSize: 16,
+    marginBottom: 24,
+    color: '#333',
+  },
+  creditWarningButton: {
+    padding: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  primaryButton: {
+    backgroundColor: COLORS.PRIMARY,
+  },
+  secondaryButton: {
+    backgroundColor: COLORS.SECONDARY,
+  },
+  creditWarningButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  cancelButton: {
+    padding: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    borderColor: COLORS.TEXT_MUTED,
+    borderWidth: 1,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: COLORS.TEXT_MUTED,
+    textAlign: 'center',
   },
 });
