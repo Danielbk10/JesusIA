@@ -1,20 +1,36 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Share, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Share, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { generateSmartLink } from '../services/DeepLinkService';
 import { COLORS } from '../config/colorConfig';
 import { FONTS } from '../config/fontConfig';
 
 const ShareCard = ({ content, onSave, onClose }) => {
-  // Função para compartilhar o conteúdo
+  // Função para compartilhar o conteúdo com deep links inteligentes
   const handleShare = async () => {
     try {
+      console.log('ShareCard: Gerando link inteligente para compartilhamento');
+      
+      // Determinar o tipo de conteúdo baseado no contexto
+      const contentType = content.includes('Devocional') || content.includes('🙏') 
+        ? 'devotional' 
+        : 'message';
+      
+      // Gerar link inteligente baseado na plataforma
+      const smartLink = generateSmartLink(content, contentType);
+      
       const shareOptions = {
-        message: `${content}\n\nCompartilhado via Jesus.IA\nBaixe o app: https://transmutebr.com/jesusia\nSiga @transmutebr no TikTok`,
-        title: 'Compartilhar via Jesus.IA',
+        message: smartLink.shareMessage,
+        title: 'Jesus.IA - Inteligência Artificial Cristã',
+        url: smartLink.primaryUrl, // iOS usa este campo
       };
+      
+      console.log('ShareCard: Compartilhando com URL:', smartLink.primaryUrl);
+      console.log('ShareCard: Plataforma detectada:', smartLink.platform);
       
       await Share.share(shareOptions);
     } catch (error) {
-      console.error('Erro ao compartilhar:', error);
+      console.error('ShareCard: Erro ao compartilhar:', error);
     }
   };
 

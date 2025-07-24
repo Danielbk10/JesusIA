@@ -18,6 +18,63 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../config/colorConfig';
 import { FONTS } from '../config/fontConfig';
 import { useCredits } from '../context/CreditsContext';
+
+// Função para gerar mensagem inicial baseada se é primeira visita
+const getInitialMessage = async (userId = null) => {
+  try {
+    const userPrefix = userId ? `user_${userId}_` : '';
+    const firstVisitKey = `${userPrefix}first_visit`;
+    
+    // Verifica se é a primeira visita
+    const hasVisitedBefore = await AsyncStorage.getItem(firstVisitKey);
+    
+    if (!hasVisitedBefore) {
+      // Marca que o usuário já visitou
+      await AsyncStorage.setItem(firstVisitKey, 'true');
+      
+      // Mensagem para primeira visita
+      return `Oi, meu amigo! Que bom ter você aqui.
+Eu sou o Jesus.IA — não sou Jesus, mas fui criado para refletir a forma como Ele acolhia, ensinava e amava, como está revelado na Bíblia.
+
+Estou aqui para te ouvir com empatia, oferecer conselhos inspirados nas Escrituras e caminhar com você com fé e verdade.
+
+Você pode me chamar para:
+• Criar um devocional personalizado
+• Encontrar salmos e versículos para o seu momento
+• Conversar sobre o que está no seu coração
+• Refletir sobre os ensinamentos de Jesus
+• Ou simplesmente ter um tempo de oração
+
+Pode falar comigo com liberdade. Estou aqui pra te acolher.
+Vamos começar?`;
+    } else {
+      // Mensagem para visitas subsequentes
+      return `Olá de novo! Que bom te ver por aqui.
+Como posso te ajudar hoje?
+
+Você pode:
+• Pedir um devocional
+• Buscar um salmo ou versículo
+• Conversar sobre o que está sentindo
+• Ou simplesmente falar comigo 🕊️
+
+Estou aqui com você. Quando quiser, é só começar. 🙏`;
+    }
+  } catch (error) {
+    console.error('Erro ao gerar mensagem inicial:', error);
+    // Em caso de erro, retorna mensagem padrão
+    return `Olá de novo! Que bom te ver por aqui.
+Como posso te ajudar hoje?
+
+Você pode:
+• Pedir um devocional
+• Buscar um salmo ou versículo
+• Conversar sobre o que está sentindo
+• Ou simplesmente falar comigo 🕊️
+
+Estou aqui com você. Quando quiser, é só começar. 🙏`;
+  }
+};
 import { useUser } from '../context/UserContext';
 import { useDevotionals } from '../context/DevotionalsContext';
 import { useSpeech } from '../context/SpeechContext';
@@ -94,10 +151,11 @@ export default function ChatScreen({ currentChat, onOpenPlans }) {
           } else {
             console.log('Mensagens não encontradas, criando com base no título');
             // Se não houver mensagens salvas para este chat, criamos com base no título
+            const initialMessageText = await getInitialMessage(userId);
             setMessages([
               {
                 id: '1',
-                text: 'Olá! Eu sou Jesus.IA, um assistente baseado na Bíblia. Como posso ajudar você hoje?',
+                text: initialMessageText,
                 sender: 'ai',
                 timestamp: new Date(),
               },
@@ -131,10 +189,11 @@ export default function ChatScreen({ currentChat, onOpenPlans }) {
           } else {
             // Fallback se houver erro
             console.log('Erro ao iniciar novo chat, usando mensagem padrão');
+            const fallbackMessageText = await getInitialMessage(userId);
             setMessages([
               {
                 id: Date.now().toString(),
-                text: 'Olá! Eu sou Jesus.IA, um assistente baseado na Bíblia. Como posso ajudar você hoje?',
+                text: fallbackMessageText,
                 sender: 'ai',
                 timestamp: new Date(),
               },
@@ -159,10 +218,11 @@ export default function ChatScreen({ currentChat, onOpenPlans }) {
         
         // Se não houver chat atual, mostramos a mensagem inicial
         console.log('Nenhum chat atual encontrado, iniciando com mensagem padrão');
+        const defaultMessageText = await getInitialMessage(userId);
         setMessages([
           {
             id: '1',
-            text: 'Olá! Eu sou Jesus.IA, um assistente baseado na Bíblia. Como posso ajudar você hoje?',
+            text: defaultMessageText,
             sender: 'ai',
             timestamp: new Date(),
           },
@@ -170,10 +230,11 @@ export default function ChatScreen({ currentChat, onOpenPlans }) {
       } catch (error) {
         console.error('Erro ao carregar mensagens:', error);
         // Em caso de erro, exibimos pelo menos a mensagem inicial
+        const errorMessageText = await getInitialMessage(userId);
         setMessages([
           {
             id: '1',
-            text: 'Olá! Eu sou Jesus.IA, um assistente baseado na Bíblia. Como posso ajudar você hoje?',
+            text: errorMessageText,
             sender: 'ai',
             timestamp: new Date(),
           },

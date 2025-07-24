@@ -1,36 +1,50 @@
-// Configurações para autenticação com provedores externos
+// 🔐 Configurações de Autenticação - JesusIA
+// Para configurar para produção, siga o guia em: docs/GUIA_CONFIGURACAO_AUTH.md
 
 export const AUTH_CONFIG = {
-  // Credenciais do Google OAuth
-  // Obtenha em: https://console.cloud.google.com/
+  // 🔵 GOOGLE OAUTH CONFIGURATION
+  // Obtenha as credenciais em: https://console.cloud.google.com/
   GOOGLE: {
-    // Cole seu ID de cliente OAuth do Google Cloud Console abaixo
+    // ⚠️ SUBSTITUA PELA SUA CREDENCIAL REAL DO GOOGLE CLOUD CONSOLE
     // Formato: 123456789012-abcdefghijklmnopqrstuvwxyz123456.apps.googleusercontent.com
-    CLIENT_ID: '322074024672-op9ihh8l3f99b0qdk869gg462f0j562p.apps.googleusercontent.com',
+    CLIENT_ID: 'SEU_CLIENT_ID_GOOGLE_AQUI.apps.googleusercontent.com',
     
-    // Para desenvolvimento com Expo, configure estes valores quando estiver pronto para produção
+    // Para apps nativos (configure quando for fazer build para produção)
     IOS_CLIENT_ID: '', 
     ANDROID_CLIENT_ID: '',
     
     // Mesmo valor que CLIENT_ID
-    WEB_CLIENT_ID: '322074024672-op9ihh8l3f99b0qdk869gg462f0j562p.apps.googleusercontent.com',
+    WEB_CLIENT_ID: 'SEU_CLIENT_ID_GOOGLE_AQUI.apps.googleusercontent.com',
     
-    // URI de redirecionamento que deve ser configurado no Google Cloud Console
-    REDIRECT_URI: 'https://auth.expo.io/@danielbk10/jesusia',
+    // ⚠️ SUBSTITUA 'danielbk10' PELO SEU USERNAME DO EXPO
+    REDIRECT_URI: 'https://auth.expo.io/@SEU_USERNAME_EXPO/jesusia',
     
-    // Escopos de permissão necessários
+    // Permissões solicitadas (não altere)
     SCOPES: ['profile', 'email']
   },
   
-  // Credenciais do Facebook OAuth
-  // Obtenha em: https://developers.facebook.com/
+  // 🔵 FACEBOOK OAUTH CONFIGURATION  
+  // Obtenha as credenciais em: https://developers.facebook.com/
   FACEBOOK: {
-    APP_ID: '1234567890123456', // Substitua pelo seu App ID real quando estiver pronto
+    // ⚠️ SUBSTITUA PELO SEU APP ID REAL DO META FOR DEVELOPERS
+    // Formato: 1234567890123456 (15-16 dígitos)
+    APP_ID: 'SEU_APP_ID_FACEBOOK_AQUI',
     
-    // Escopos de permissão necessários
+    // Permissões solicitadas (não altere)
     SCOPES: ['public_profile', 'email']
   },
 };
+
+// 📝 STATUS ATUAL:
+// ✅ Código implementado com fallback para desenvolvimento
+// ❌ Credenciais de produção não configuradas
+// 
+// 🚀 PARA ATIVAR AUTENTICAÇÃO REAL:
+// 1. Siga o guia completo em: docs/GUIA_CONFIGURACAO_AUTH.md
+// 2. Substitua 'SEU_CLIENT_ID_GOOGLE_AQUI' pela credencial real
+// 3. Substitua 'SEU_APP_ID_FACEBOOK_AQUI' pela credencial real  
+// 4. Substitua 'SEU_USERNAME_EXPO' pelo seu username real
+// 5. Teste a autenticação no app
 
 // Instruções para configurar as credenciais:
 

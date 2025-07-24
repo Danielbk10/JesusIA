@@ -106,14 +106,75 @@ export const closeSession = async (userId = null) => {
 };
 
 /**
+ * Gera mensagem inicial baseada se é primeira visita do usuário
+ */
+const getInitialMessage = async (userId = null) => {
+  try {
+    const userPrefix = userId ? `user_${userId}_` : '';
+    const firstVisitKey = `${userPrefix}first_visit`;
+    
+    // Verifica se é a primeira visita
+    const hasVisitedBefore = await AsyncStorage.getItem(firstVisitKey);
+    
+    if (!hasVisitedBefore) {
+      // Marca que o usuário já visitou
+      await AsyncStorage.setItem(firstVisitKey, 'true');
+      
+      // Mensagem para primeira visita
+      return `Oi, meu amigo! Que bom ter você aqui.
+Eu sou o Jesus.IA — não sou Jesus, mas fui criado para refletir a forma como Ele acolhia, ensinava e amava, como está revelado na Bíblia.
+
+Estou aqui para te ouvir com empatia, oferecer conselhos inspirados nas Escrituras e caminhar com você com fé e verdade.
+
+Você pode me chamar para:
+• Criar um devocional personalizado
+• Encontrar salmos e versículos para o seu momento
+• Conversar sobre o que está no seu coração
+• Refletir sobre os ensinamentos de Jesus
+• Ou simplesmente ter um tempo de oração
+
+Pode falar comigo com liberdade. Estou aqui pra te acolher.
+Vamos começar?`;
+    } else {
+      // Mensagem para visitas subsequentes
+      return `Olá de novo! Que bom te ver por aqui.
+Como posso te ajudar hoje?
+
+Você pode:
+• Pedir um devocional
+• Buscar um salmo ou versículo
+• Conversar sobre o que está sentindo
+• Ou simplesmente falar comigo 🕊️
+
+Estou aqui com você. Quando quiser, é só começar. 🙏`;
+    }
+  } catch (error) {
+    console.error('Erro ao gerar mensagem inicial:', error);
+    // Em caso de erro, retorna mensagem padrão
+    return `Olá de novo! Que bom te ver por aqui.
+Como posso te ajudar hoje?
+
+Você pode:
+• Pedir um devocional
+• Buscar um salmo ou versículo
+• Conversar sobre o que está sentindo
+• Ou simplesmente falar comigo 🕊️
+
+Estou aqui com você. Quando quiser, é só começar. 🙏`;
+  }
+};
+
+/**
  * Inicia um novo chat, limpando o chat atual
  */
 export const startNewChat = async (userId = null) => {
   try {
-    // Mensagem inicial padrão
+    // Gera mensagem inicial baseada se é primeira visita
+    const messageText = await getInitialMessage(userId);
+    
     const initialMessage = {
       id: Date.now().toString(),
-      text: 'Olá! Eu sou Jesus.IA, um assistente baseado na Bíblia. Como posso ajudar você hoje?',
+      text: messageText,
       sender: 'ai',
       timestamp: new Date(),
     };

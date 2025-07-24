@@ -84,6 +84,18 @@ export const UserProvider = ({ children }) => {
       const userData = await AuthStorageService.loadUser();
       
       if (userData) {
+        // Carregar foto de perfil salva localmente (apenas para usuários não-OAuth)
+        if (userData.loginMethod !== 'google' && userData.loginMethod !== 'facebook') {
+          try {
+            const savedProfileImage = await AsyncStorage.getItem(`profileImage_${userData.id}`);
+            if (savedProfileImage && !userData.photoURL) {
+              userData.photoURL = savedProfileImage;
+            }
+          } catch (error) {
+            console.log('UserContext: Erro ao carregar foto de perfil local:', error);
+          }
+        }
+        
         console.log('UserContext: Usuário carregado com sucesso', userData.displayName);
         setUser(userData);
         setLoading(false);

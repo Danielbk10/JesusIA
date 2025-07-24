@@ -13,6 +13,7 @@ import {
   Clipboard
 } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import { generateSmartLink } from '../services/DeepLinkService';
 import { COLORS } from '../config/colorConfig';
 import { FONTS } from '../config/fontConfig';
 import { useUser } from '../context/UserContext';
@@ -123,16 +124,31 @@ const QRCodeScreen = ({ onClose }) => {
   
   const handleShare = async () => {
     try {
+      console.log('QRCodeScreen: Gerando link inteligente para QR Code');
+      
+      // Gerar link inteligente para o app
+      const smartLink = generateSmartLink('', 'app');
+      
       const shareOptions = {
-        title: 'Compartilhar QR Code do Jesus.IA',
+        title: 'Jesus.IA - QR Code para Download',
         message: useExpoLink
-          ? `Escaneie este QR code para acessar o Jesus.IA via Expo Go: ${qrValue}\n\nBaixe o Expo Go: https://expo.dev/client\nSiga @transmutebr no TikTok`
-          : `Escaneie este QR code para acessar o Jesus.IA: ${qrValue}\n\nBaixe o app: https://transmutebr.com/jesusia\nSiga @transmutebr no TikTok`,
+          ? `📱 Escaneie este QR code para acessar o Jesus.IA via Expo Go: ${qrValue}
+
+🔗 Baixe o Expo Go: https://expo.dev/client
+
+${smartLink.shareMessage}`
+          : `📱 Escaneie este QR code para baixar o Jesus.IA: ${qrValue}
+
+${smartLink.shareMessage}`,
+        url: smartLink.primaryUrl, // iOS usa este campo
       };
+      
+      console.log('QRCodeScreen: Compartilhando QR com URL:', smartLink.primaryUrl);
+      console.log('QRCodeScreen: Plataforma detectada:', smartLink.platform);
       
       await Share.share(shareOptions);
     } catch (error) {
-      console.error('Erro ao compartilhar QR code:', error);
+      console.error('QRCodeScreen: Erro ao compartilhar QR code:', error);
     }
   };
   

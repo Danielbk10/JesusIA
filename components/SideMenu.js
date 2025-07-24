@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
   TextInput,
-  ScrollView,
   Image,
   FlatList,
-  Alert
+  Alert,
+  ScrollView
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUser } from '../context/UserContext';
 import { useDevotionals } from '../context/DevotionalsContext';
 import { COLORS } from '../config/colorConfig';
@@ -20,36 +21,81 @@ export default function SideMenu({ onClose, onSelectChat, onOpenPlans, onViewDev
   const { devotionals, deleteDevotional } = useDevotionals();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('chats'); // 'chats' ou 'devotionals'
-  
-  // Histórico de chats simulado
-  const chatHistory = [
-    { id: '1', title: 'Como Jesus tratava os estrangeiros?', date: '15/04/2025', preview: 'Jesus tratava os estrangeiros com...' },
-    { id: '2', title: 'O que a Bíblia diz sobre perdão?', date: '14/04/2025', preview: 'O perdão é um tema central...' },
-    { id: '3', title: 'Quem foram os 12 apóstolos?', date: '13/04/2025', preview: 'Os 12 apóstolos escolhidos por Jesus...' },
-    { id: '4', title: 'O que é o fruto do Espírito?', date: '12/04/2025', preview: 'O fruto do Espírito é descrito em...' },
-    { id: '5', title: 'Como Jesus via a oração?', date: '11/04/2025', preview: 'Jesus ensinou que a oração deve ser...' },
-  ];
-  
-  // Filtrar chats com base na busca
+  const [chatHistory, setChatHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadChatHistory();
+  }, [user]);
+
+  const loadChatHistory = async () => {
+    try {
+      setLoading(true);
+      const userPrefix = user?.id ? `user_${user.id}_` : '';
+      const chatHistoryKey = `${userPrefix}chat_history`;
+
+      const storedHistory = await AsyncStorage.getItem(chatHistoryKey);
+      if (storedHistory) {
+        const history = JSON.parse(storedHistory);
+        setChatHistory(history);
+        console.log('SideMenu: Histórico carregado:', history.length, 'conversas');
+      } else {
+        setChatHistory([]);
+        console.log('SideMenu: Nenhum histórico encontrado');
+      }
+    } catch (error) {
+      console.error('SideMenu: Erro ao carregar histórico:', error);
+      setChatHistory([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredChats = searchQuery
-    ? chatHistory.filter(chat => 
+    ? chatHistory.filter(chat =>
         chat.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         chat.preview.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : chatHistory;
-    
-  // Filtrar devocionais com base na busca
+
   const filteredDevotionals = searchQuery
-    ? devotionals.filter(devotional => 
+    ? devotionals.filter(devotional =>
         devotional.content.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : devotionals;
-  
+
+  const loadChatFromHistory = async (chatItem) => {
+    try {
+      console.log('SideMenu: Carregando conversa do histórico:', chatItem.id);
+      
+      // Carregar as mensagens da conversa específica
+      const chatMessages = await AsyncStorage.getItem(`chat_${chatItem.id}`);
+      if (chatMessages) {
+        const messages = JSON.parse(chatMessages);
+        console.log('SideMenu: Mensagens carregadas:', messages.length);
+        
+        // Passar a conversa completa para o componente pai
+        if (onSelectChat) {
+          onSelectChat({
+            ...chatItem,
+            messages: messages
+          });
+        }
+      } else {
+        console.warn('SideMenu: Mensagens não encontradas para:', chatItem.id);
+        Alert.alert('Aviso', 'Esta conversa não pôde ser carregada.');
+      }
+    } catch (error) {
+      console.error('SideMenu: Erro ao carregar conversa:', error);
+      Alert.alert('Erro', 'Não foi possível carregar esta conversa.');
+    }
+  };
+
   const renderChatItem = ({ item }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.chatItem}
       onPress={() => {
-        onSelectChat(item);
+        loadChatFromHistory(item);
         onClose();
       }}
     >
@@ -60,9 +106,9 @@ export default function SideMenu({ onClose, onSelectChat, onOpenPlans, onViewDev
       <Text style={styles.chatPreview} numberOfLines={2}>{item.preview}</Text>
     </TouchableOpacity>
   );
-  
+
   const renderDevotionalItem = ({ item }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.chatItem}
       onPress={() => {
         if (onViewDevotional) {
@@ -85,7 +131,7 @@ export default function SideMenu({ onClose, onSelectChat, onOpenPlans, onViewDev
       <Text style={styles.chatPreview} numberOfLines={3}>{item.content}</Text>
     </TouchableOpacity>
   );
-  
+
   const confirmDeleteDevotional = (id) => {
     Alert.alert(
       'Excluir Devocional',
@@ -103,27 +149,27 @@ export default function SideMenu({ onClose, onSelectChat, onOpenPlans, onViewDev
       ]
     );
   };
-  
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.logoContainer}>
-          <Image 
-            source={require('../assets/images/jesus-logo.png')} 
-            style={styles.logoImage} 
+          <Image
+            source={require('../assets/images/jesus-logo.png')}
+            style={styles.logoImage}
             resizeMode="contain"
           />
           <Text style={styles.title}>JESUS.IA</Text>
         </View>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={styles.closeButton}
           onPress={onClose}
         >
           <Text style={styles.closeButtonText}>✕</Text>
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
@@ -133,28 +179,31 @@ export default function SideMenu({ onClose, onSelectChat, onOpenPlans, onViewDev
           onChangeText={setSearchQuery}
         />
       </View>
-      
+
       <View style={styles.tabsContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'chats' && styles.activeTab]}
           onPress={() => setActiveTab('chats')}
         >
           <Text style={[styles.tabText, activeTab === 'chats' && styles.activeTabText]}>Conversas</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'devotionals' && styles.activeTab]}
           onPress={() => setActiveTab('devotionals')}
         >
           <Text style={[styles.tabText, activeTab === 'devotionals' && styles.activeTabText]}>Devocionais</Text>
         </TouchableOpacity>
       </View>
-      
+
       {activeTab === 'chats' ? (
         <View style={styles.historyContainer}>
           <Text style={styles.historyTitle}>Histórico de Conversas</Text>
-          
-          {filteredChats.length > 0 ? (
+          {loading ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>Carregando histórico...</Text>
+            </View>
+          ) : filteredChats.length > 0 ? (
             <FlatList
               data={filteredChats}
               renderItem={renderChatItem}
@@ -164,8 +213,8 @@ export default function SideMenu({ onClose, onSelectChat, onOpenPlans, onViewDev
           ) : (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>
-                {searchQuery 
-                  ? 'Nenhuma conversa encontrada' 
+                {searchQuery
+                  ? 'Nenhuma conversa encontrada'
                   : 'Nenhuma conversa recente'}
               </Text>
             </View>
