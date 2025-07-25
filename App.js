@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, Modal, TouchableOpacity, Alert, Platform, StatusBar as RNStatusBar, Animated } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserProvider, useUser } from './context/UserContext';
 import { CreditsProvider } from './context/CreditsContext';
 import { DevotionalsProvider } from './context/DevotionalsContext';
@@ -14,6 +15,7 @@ import LoginScreen from './components/LoginScreen';
 import SideMenu from './components/SideMenu';
 import BottomBar from './components/BottomBar';
 import QRCodeScreen from './components/QRCodeScreen';
+import OnboardingScreen from './components/OnboardingScreen';
 
 // Componente interno que usa o contexto de usuário
 function AppContent() {
@@ -26,10 +28,33 @@ function AppContent() {
   const [currentChat, setCurrentChat] = useState(null);
   const [selectedDevotional, setSelectedDevotional] = useState(null);
   const [devotionalModalVisible, setDevotionalModalVisible] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(null); // null = carregando, true = mostrar, false = não mostrar
+  const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
   
   // Usar o contexto de usuário
   const { user, signOut } = useUser();
   const isLoggedIn = !!user;
+  
+  // Verificar se o onboarding já foi completado
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      try {
+        const onboardingCompleted = await AsyncStorage.getItem('onboarding_completed');
+        setShowOnboarding(onboardingCompleted !== 'true');
+        setIsCheckingOnboarding(false);
+      } catch (error) {
+        console.error('Erro ao verificar status do onboarding:', error);
+        setShowOnboarding(true); // Em caso de erro, mostrar onboarding
+        setIsCheckingOnboarding(false);
+      }
+    };
+    
+    checkOnboardingStatus();
+  }, []);
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+  };
   
   const handleLogout = () => {
     Alert.alert(
@@ -84,6 +109,25 @@ function AppContent() {
       }).start();
     }
   }, [sideMenuVisible]);
+
+  // Se ainda está verificando o status do onboarding, não renderiza nada
+  if (isCheckingOnboarding) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.statusBarSpace} />
+        <StatusBar style="light" />
+      </View>
+    );
+  }
+  
+  // Se deve mostrar onboarding, renderiza o OnboardingScreen
+  if (showOnboarding) {
+    return (
+      <View style={styles.container}>
+        <OnboardingScreen onComplete={handleOnboardingComplete} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
